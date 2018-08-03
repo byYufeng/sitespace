@@ -1,0 +1,7 @@
+data/*
+logs/*
+
+*.pyc
+
+!*.gitignore
+!*.gitkeep

@@ -1,0 +1,102 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block head %}
+    {{ super() }}
+    <!-- <link rel="shortcut icon" href="https://img3.doubanio.com/icon/up98355618-6.jpg" /> --!>
+    <link rel="shortcut icon" href="https://img3.doubanio.com/icon/up98355618-6.jpg" /> 
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    
+    <script>
+      $( function() {
+        $( "#custom_modules" ).sortable();
+        $( "#custom_modules" ).disableSelection();
+      } );
+    </script>
+{% endblock head%}
+
+{% block title %}
+FSRM
+{% endblock title %}
+
+{% block navbar %}
+<nav class="navbar navbar-inverse" role="navigation">
+  <div class="container-fluid">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">❤</a>
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="/">主页</a></li>
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">生活助手<span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a href="#">日程安排</a></li>
+            <li><a href="#">出行</a></li>
+            <li><a href="#">记事</a></li>
+            <li><a href="#">生活服务</a></li>
+            <li><a href="{{ url_for('personal.upload_file') }}">文件管理</a></li>
+          </ul>
+        </li>
+        <li><a href="{{ url_for('blog.show_articles')  }}">博客地带</a></li>
+        <li><a href="#">游戏分享</a></li>
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">在线视频<span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a href="#">直播整合</a></li>
+            <li><a href="#">云端播放</a></li>
+            <!--<li class="divider"></li> -->
+          </ul>
+        </li>
+        <li><a href="#">BBS</a></li>
+      </ul>
+      <form class="navbar-form navbar-left" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search">
+        </div>
+        <button type="submit" class="btn btn-default">搜索</button>
+      </form>
+      <ul class="nav navbar-nav navbar-right">
+        {% if session.logged_in %}
+            <li><a href="#">Hello! {{ session.logged_in }}</a></li>
+            <li><a href="{{ url_for('login.sign_out') }}">注销</a></li>
+        {% else %}
+            <li><a href="{{ url_for('login.sign_in') }}">登录</a></li>
+            <li><a href="{{ url_for('login.sign_up') }}">注册</a></li>
+        {% endif %}
+      </ul>
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
+{% endblock navbar %}
+
+{% block content %}
+<div class="content">
+    {{util.flashed_messages(dismissible=True)}} 
+    
+    <div class="container">
+        {% block container %} {% endblock container %}
+    </div>
+
+    <!-- 由于模块继承的架构，新定义的code block只能放在content 里 -->
+    {% block footer %}
+    <footer class="footer" align="center">
+        <div class="container">
+            <p></p>
+            <p class="text-muted">只有你和我 懂得我的好</p>
+            <p class="text-muted">Copyright© byufeng</p>
+        </div>
+    </footer>
+    {% endblock footer %}
+</div>
+{% endblock content %}

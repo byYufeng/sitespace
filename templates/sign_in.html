@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+<!-- 使用row和col布局 使用form-group、form-control排版 -->
+
+{% block styles %}
+    {{ super() }}
+    <style type="text/css">
+    </style>
+{% endblock styles %}
+
+{% block container %}
+
+{% if error %}
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+{% endif %}
+
+{% if not session.logged_in %}
+    <form action="{{ url_for('login.sign_in') }}" method=post>
+        <div class="row">
+            <div class="col-md-4 col-md-offset-4">
+                <div class="form-group from-signin">
+                    <h2>Please sign in</h2>
+                </div>
+                <div class="form-group">
+                    <input type="username" name="username" class="form-control" placeholder="Username" required autofocus>
+                </div>
+                <div class="form-group from-signin">
+                    <input type="password" name="password" class="form-control" placeholder="Password" required>
+                </div>
+                <button type="submit" class="btn btn-lg btn-primary btn-block">Sign in</button>
+            </div>
+        </div>
+    </form>
+{% else %}
+    <!-- 理论上讲不存在 -->
+{% endif %}
+
+{% endblock container %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block container %}
+{{util.flashed_messages(dismissible=True)}}
+<div class="container">
+  <h3><b>文件存储和下载</b></h3>
+  {{ wtf.quick_form(upload_form, form_type='inline', button_map={'submit_button': 'primary'}, action='upload') }}
+  </br>
+  <a href="/personal/downloads">Downloads list</a>
+  </br>
+</div>
+{% endblock %}

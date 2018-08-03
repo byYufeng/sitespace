@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+
+{% block container %}
+<div class="page-header">
+    <h1>Hi, sweet. <small>Nice to meet you.</h1>
+</div>
+
+{#
+{{ wtf.quick_form(custom_form.google, form_type='inline', button_map={'submit_button': 'primary'}, action='deal') }}
+</br>
+{{ wtf.quick_form(custom_form.lagou, form_type='inline', button_map={'submit_button': 'primary'}, action='deal') }}
+</br>
+{{ wtf.quick_form(custom_form.douban, form_type='inline', button_map={'submit_button': 'primary'}, action='deal') }}
+</br>
+#}
+
+<!-- 搜索引擎 -->
+<div class="row">
+    <div class="col-md-2 form-group">
+        <h3><b>搜索引擎</b></h3>
+    </div>
+</div>
+
+<form action="{{ url_for('home.search') }}" method="post">
+    <!-- 输入框 -->
+    <div class="row">
+        <div class="col-md-4 col-md-offset-1 form-group">
+            <input name="keyword" class="form-control" placeholder="text"></input>
+        </div>
+    </div>
+
+    <!-- 一级选项(大类) -->
+    <div class="row">
+        <div class="col-md-4 col-md-offset-1 form-group">
+            <div class="btn-group" data-toggle="buttons" >
+                <button class="btn btn-default active">All</button>
+                <button class="btn btn-default">百科</button>
+                <button class="btn btn-default">影视</button>
+                <button class="btn btn-default">翻译</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 二级选项(搜索引擎) 可复选 -->
+    <div class="row">
+        <div class="col-md-4 col-md-offset-1 form-group">
+            <div class="btn-group" data-toggle="buttons" >
+                <label class="btn btn-default active">
+                    <input type="checkbox" checked>Google</input>
+                </label>
+                <label class="btn btn-default">
+                    <input type="checkbox">Baidu</input>
+                </label>
+                <label class="btn btn-default">
+                    <input type="checkbox">知乎</input>
+                </label>
+                <label class="btn btn-default">
+                    <input type="checkbox">贴吧</input>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- submit -->
+    <div class="row">
+        <div class="col-md-4 col-md-offset-1 form-group">
+            <button type="submit" class="btn btn-primary ">Search</button></td>
+        </div>
+    </div>
+
+</form>
+
+
+<!-- 自定义模块(快捷链接) -->
+<div class="row">
+    <div class="col-md-2">
+        <h3><b>自定义模块</b></h3>
+    </div>
+
+</div>
+
+<div class="rows">
+    <div class="row">
+        <div class="col-md-4 col-md-offset-1" id="custom_modules">
+            {% for module in modules %}
+                <a href="http://{{ module.url }}" class="btn">{{ module.name }}</a>
+            {% else %}
+                <b>No modules</b>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="row">
+    &nbsp;
+    </div>
+
+    <div class="row">
+        <form action="{{ url_for('home.add_module') }}" method="post">
+            <div class="col-md-4 col-md-offset-1">
+                <input name="name" class="form-control" placeholder="name"></input>
+                <input name="url" class="form-control" placeholder="url"></input>
+                <button type="submit" class="btn btn-primary ">Add</button></td>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+
+<!-- 
+<div id="allmap"></div>
+<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=DD279b2a90afdf0ae7a3796787a0742e"></script>
+<script type="text/javascript">
+    // 百度地图API功能
+    var map = new BMap.Map("allmap");
+    var point = new BMap.Point(116.331398,39.897445);
+    map.centerAndZoom(point,12);
+
+    var geolocation = new BMap.Geolocation();
+    geolocation.getCurrentPosition(function(r){
+        if(this.getStatus() == BMAP_STATUS_SUCCESS){
+            var mk = new BMap.Marker(r.point);
+            map.addOverlay(mk);
+            map.panTo(r.point);
+            alert('您的位置：'+r.point.lng+','+r.point.lat);
+        }
+        else {
+            alert('failed'+this.getStatus());
+        }        
+    },{enableHighAccuracy: true})
+    //关于状态码
+    //BMAP_STATUS_SUCCESS   检索成功。对应数值“0”。
+    //BMAP_STATUS_CITY_LIST 城市列表。对应数值“1”。
+    //BMAP_STATUS_UNKNOWN_LOCATION  位置结果未知。对应数值“2”。
+    //BMAP_STATUS_UNKNOWN_ROUTE 导航结果未知。对应数值“3”。
+    //BMAP_STATUS_INVALID_KEY   非法密钥。对应数值“4”。
+    //BMAP_STATUS_INVALID_REQUEST   非法请求。对应数值“5”。
+    //BMAP_STATUS_PERMISSION_DENIED 没有权限。对应数值“6”。(自 1.1 新增)
+    //BMAP_STATUS_SERVICE_UNAVAILABLE   服务不可用。对应数值“7”。(自 1.1 新增)
+    //BMAP_STATUS_TIMEOUT   超时。对应数值“8”。(自 1.1 新增)
+</script>
+
+-->
+
+
+{% endblock %}

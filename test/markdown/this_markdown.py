@@ -80,97 +80,6 @@ def generate_html(params=[]):
     ''' % params
     return html
 
-def generate_markdown_template():
-    content = '''
-<!--  -->
-
-<!-- 0.换行 -->
-<!-- 通过行末两个空格或者一个空行换行 -->
-row1
-row2  
-row3
-
-row4
-
-<!-- 1.标题 -->
-# 一级标题
-## 二级标题
-###三级标题
-#### 四级标题
-##### 五级标题
-###### 六级标题
-
-<!-- 还可以在下一行使用=或-标记一级或二级标题 -->
-一级标题
-=
-二级标题
--
-
-<!-- 2.强调(斜体和粗体) -->
-<!-- 可使用*/_两种标记 -->
-*斜体* **粗体** ***粗斜体***  
-_斜体_ _粗体__ ___粗斜体___
-
-<!-- 3.分割线 -->
-<!-- 可使用*/_/-三种标记 -->
-***
-
----
-
-___
-
-
-<!-- 4.列表 -->
-<!-- 4.1无序列表 可使用*/_/+三种标记 -->
-* A1
-* A2
-
-- B1
-- B2
-
-+ C1
-+ C2
-
-<!-- 可通过缩进嵌套 -->
-+ D1
-    + D1.1
-    + D1.2
-
-<!-- 4.2有序列表 -->
-1. AA 
-2. BB
-3. CC
-
-<!-- 5.引用 -->
-<!-- 可嵌套 -->
->老子最吊
->>老子最吊前传版
-
-<!-- 6.超链接 -->
-[百度](https://www.baidu.com)
-![百度](https://www.baidu.com/img/baidu_jgylogo3.gif)
-
-<!-- 7.表格 -->
-| Name | Age | Sex |
-| ---- | --- | --- |
-| 11 | 22 | 33 |
-
-<!-- 8.代码块 -->
-<!-- 使用反引号表示单行或行初四个空格缩进以表示多行 -->
-`print(666)`
-
-    def main():
-        print(666)
-
-<!-- 9.转义 -->
-\*嘿嘿*哈哈*哦哦
-
-<!-- 10.其他 -->
-[![GitHub issues](https://img.shields.io/github/issues/byYufeng/riven.svg)](https://github.com/byYufeng/riven/issues)
-[![GitHub forks](https://img.shields.io/github/forks/byYufeng/riven.svg)](https://github.com/byYufeng/riven/network)
-[![GitHub stars](https://img.shields.io/github/stars/byYufeng/riven.svg)](https://github.com/byYufeng/riven/stargazers)
-'''.strip()
-    return content
 
 def create_app():
     app = Flask(__name__)
@@ -183,7 +92,8 @@ def create_app():
             showdown = fin.read()
         with open('table-extension-1.0.1/src/showdown-table.js') as fin:
             showdown_table = fin.read()
-        content = generate_markdown_template()
+        with open('this.md') as fin:
+            content = fin.read()
         return generate_html((showdown_table, content))
 
     return app
@@ -191,6 +101,6 @@ def create_app():
 if __name__ == '__main__':
     debug = False
     host = '0.0.0.0'
-    port = 8001#6080 if len(sys.argv) < 2 else sys.argv[1]
+    port = 8001 if len(sys.argv) < 2 else sys.argv[1]
     #port = 80#6080 if len(sys.argv) < 2 else sys.argv[1]
     create_app().run(debug=debug, port=port, host=host)

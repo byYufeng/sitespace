@@ -17,6 +17,43 @@
 </br>
 #}
 
+
+<!-- 自定义模块(快捷链接) -->
+<div class="row">
+    <div class="col-md-2">
+        <h3><b>自定义模块</b></h3>
+    </div>
+
+</div>
+
+<div class="rows">
+    <div class="row">
+        <div class="col-md-4 col-md-offset-1" id="custom_modules">
+            {% for module in modules %}
+                <a href="http://{{ module.url }}" class="btn">{{ module.name }}</a>
+            {% else %}
+                <b>No modules</b>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="row">
+    &nbsp;
+    </div>
+
+    <div class="row">
+        <form action="{{ url_for('home.add_module') }}" method="post">
+            <div class="col-md-4 col-md-offset-1">
+                <input name="name" class="form-control" placeholder="name"></input>
+                <input name="url" class="form-control" placeholder="url"></input>
+                <button type="submit" class="btn btn-primary ">Add</button></td>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+
 <!-- 搜索引擎 -->
 <div class="row">
     <div class="col-md-2 form-group">
@@ -72,43 +109,6 @@
     </div>
 
 </form>
-
-
-<!-- 自定义模块(快捷链接) -->
-<div class="row">
-    <div class="col-md-2">
-        <h3><b>自定义模块</b></h3>
-    </div>
-
-</div>
-
-<div class="rows">
-    <div class="row">
-        <div class="col-md-4 col-md-offset-1" id="custom_modules">
-            {% for module in modules %}
-                <a href="http://{{ module.url }}" class="btn">{{ module.name }}</a>
-            {% else %}
-                <b>No modules</b>
-            {% endfor %}
-        </div>
-    </div>
-
-    <div class="row">
-    &nbsp;
-    </div>
-
-    <div class="row">
-        <form action="{{ url_for('home.add_module') }}" method="post">
-            <div class="col-md-4 col-md-offset-1">
-                <input name="name" class="form-control" placeholder="name"></input>
-                <input name="url" class="form-control" placeholder="url"></input>
-                <button type="submit" class="btn btn-primary ">Add</button></td>
-            </div>
-        </form>
-    </div>
-
-</div>
-
 
 <!-- 
 <div id="allmap"></div>

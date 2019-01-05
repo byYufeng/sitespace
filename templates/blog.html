@@ -23,7 +23,9 @@
         <div>
             <h2><a href="#">{{ article.title }}</a></h2>
             <p class="lead">{{ article.author }} &nbsp;&nbsp;<span class="glyphicon glyphicon-time"></span>{{ article.publishtime }}</p>
-            <p>{{ article.text | safe }}<a href="#">...查看全文</a></p>
+            <!-- <p>{{ article.text | safe }}<a href="#">...查看全文</a></p> -->
+            <p>{{ article.text | safe }}</p>
+            <p><a href="#">查看全文</a></p> 
             <hr>
         </div/>
     {% else %}

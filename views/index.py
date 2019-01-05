@@ -13,15 +13,6 @@ from flask import request
 from flask import send_from_directory
 import logging
 
-
-def main():
-    debug = True
-    host = '0.0.0.0'
-    port = 6080 if len(sys.argv) < 2 else sys.argv[1]
-    #port = 80 #if len(sys.argv) < 2 else sys.argv[1]
-    create_app().run(debug=debug, port=port, host=host)
-
-
 def create_app():
     app = Flask(__name__)
 
@@ -62,4 +53,8 @@ def create_app():
 
 
 if __name__ == '__main__':
-    main()
+    debug = True
+    host = '0.0.0.0'
+    port = 6080 #if len(sys.argv) < 2 else sys.argv[1]
+    #port = 80 #if len(sys.argv) < 2 else sys.argv[1]
+    create_app().run(debug=debug, port=port, host=host)

@@ -18,13 +18,26 @@ blog = Blueprint('blog', __name__)
 #首页展示
 @blog.route('/show')
 def show_articles():
+    fields = ['id', 'title', 'text', 'author', 'publishtime']
+
     conn = get_conn()
-    sql = 'select title, text, author, publishtime from articles order by id desc'
+    sql = 'select %s from articles order by id desc' % ','.join(fields)
     res = select(conn, sql)
     records = [result for result in res]
-    print records[-1][1]
-    articles = [dict(title=record[0], text=str(record[1]).replace('\r','<br/>'), author=record[2], publishtime=record[3]) for record in records]
-    return render_template('blog.html', articles=articles)
+
+    # 将文本的\r\n换行符替换为html的<br/>
+    for i in range(len(records)):
+        record = list(records[i])
+        record[2] = str(record[2]).replace('\r\n', '<br/>').replace('\r', '<br/>').replace('\n', '<br/>')
+        records[i] = record
+    articles = [dict(zip(fields, record)) for record in records]
+
+    # 读取markdown tutorial
+
+    print sys.path
+    with open('test/markdown/markdown_template') as fin:
+        markdown_template = fin.read()
+    return render_template('blog.html', articles=articles, markdown_template=markdown_template)
 
 
 #检查登录状态并添加文章

@@ -1,6 +1,37 @@
 {% extends "base.html" %}
 
 {% block container%}
+    <!-- 展示 -->
+    <div id="show_articles">
+    {% for article in articles %}
+        <div>
+            <h2>
+                <a href="#" id="article_{{ article.id }}_title">{{ article.title }}</a>
+            </h2>
+
+            <p class="lead">
+                <span id="article_{{ article.id }}_author">{{ article.author }}</span>
+                <span>&nbsp;&nbsp;<span class="glyphicon glyphicon-time"></span>{{ article.publishtime }}</span>
+                <font size=3>
+                    &nbsp;&nbsp;<a href="#" data-toggle="modal" data-target="#edit" onClick="EditArticle({{ article.id }})">编辑</a>
+                    &nbsp;&nbsp;<a href="#" data-toggle="modal" data-target="#hide">隐藏</a>
+                    &nbsp;&nbsp;<a href="#" data-toggle="modal" data-target="#remove">删除</a>
+                </font>
+            </p>
+
+            <p id="article_{{ article.id }}_text">{{ article.text | safe }}</p>
+            <p><a href="#">查看全文</a></p> 
+            <hr>
+        </div/>
+    {% else %}
+        <em>This guy is so lazy...</em>
+    {% endfor %}
+    </div>
+
+    <!-- 添加文章 -->
+
+    <button type="button" class="btn btn-primary btn-circle btn-xl"><i class="glyphicon glyphicon-plus"></i></button>
+
     <div id="add_article">
     {% if session.logged_in %}
         <form action="{{ url_for('blog.add_article') }}" method=post>
@@ -18,20 +49,206 @@
         </form>
     {% endif %}
     </div>
-    <div id="show_articles">
-    {% for article in articles %}
-        <div>
-            <h2><a href="#">{{ article.title }}</a></h2>
-            <p class="lead">{{ article.author }} &nbsp;&nbsp;<span class="glyphicon glyphicon-time"></span>{{ article.publishtime }}</p>
-            <!-- <p>{{ article.text | safe }}<a href="#">...查看全文</a></p> -->
-            <p>{{ article.text | safe }}</p>
-            <p><a href="#">查看全文</a></p> 
-            <hr>
-        </div/>
-    {% else %}
-        <em>This guy is so lazy...</em>
-    {% endfor %}
+
+    <!-- 模态弹出框（新建、编辑） -->
+    <div class="modal fade" id="edit" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" style="width: 80%;">
+            <div class="modal-content">
+                <form id="article">
+                    <div class="modal-header">
+                        <h4 class="modal-title form-group" id="myModalLabel">
+                            <input name="title" id="article_title" class="form-control" placeholder="Title" required="" autofocus="" />
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row form-group">
+                            <textarea id="article_text" class="col-xs-4 col-xs-offset-1" style="resize:None;height:0px;padding-bottom:45%" onkeyup="compile()" placeholder="{{ markdown_template }}"></textarea>
+                            <div id="markdown_result" class="col-xs-4 col-xs-offset-2" style="border-style: solid;border-width:1px;border-color:rgb(169, 169, 169);height:0px;padding-bottom:45%"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default form-group" data-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary form-group">提交更改</button>
+                    </div>
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
     </div>
 
+
+    <script>
+        // 给弹出的模态框传入编辑内容
+        function EditArticle(article_id){
+            title = $("#article_" + article_id + "_title").text();
+            text = $("#article_" + article_id + "_text").text();
+            $("#article_title").text(title);
+            $("#article_text").text(text);
+        }
+
+        // 即时编辑md文本
+        function compile(){
+            var text = document.getElementById("article_text").value;
+            var text = $("#article_text").val();
+            //var converter = new showdown.Converter();
+            var converter = new showdown.Converter({extensions: ['table']});
+
+            var html = converter.makeHtml(text);
+            document.getElementById("markdown_result").innerHTML = html;
+        }
+    </script>
+
+    <!-- markdown插件和table扩展插件 -->
+    <script src="https://cdn.bootcss.com/showdown/1.8.6/showdown.js"></script>
+    <script>
+        /*
+         * Basic table support with re-entrant parsing, where cell content
+         * can also specify markdown.
+         *
+         * Tables
+         * ======
+         *
+         * | Col 1   | Col 2                                              |
+         * |======== |====================================================|
+         * |**bold** | ![Valid XHTML] (http://w3.org/Icons/valid-xhtml10) |
+         * | Plain   | Value                                              |
+         *
+         */
+
+        (function () {
+          'use strict';
+
+          var table = function (converter) {
+
+            var tables = {}, style = 'text-align:left;', filter;
+            tables.th = function (header) {
+              if (header.trim() === '') {
+                return '';
+              }
+              var id = header.trim().replace(/ /g, '_').toLowerCase();
+              return '<th id="' + id + '" style="' + style + '">' + header + '</th>';
+            };
+            tables.td = function (cell) {
+              return '<td style="' + style + '">' + converter.makeHtml(cell) + '</td>';
+            };
+            tables.ths = function () {
+              var out = '',
+                  i = 0,
+                  hs = [].slice.apply(arguments);
+              for (i; i < hs.length; i += 1) {
+                out += tables.th(hs[i]) + '\n';
+              }
+              return out;
+            };
+            tables.tds = function () {
+              var out = '', i = 0, ds = [].slice.apply(arguments);
+              for (i; i < ds.length; i += 1) {
+                out += tables.td(ds[i]) + '\n';
+              }
+              return out;
+            };
+            tables.thead = function () {
+              var out,
+                  hs = [].slice.apply(arguments);
+              out = '<thead>\n';
+              out += '<tr>\n';
+              out += tables.ths.apply(this, hs);
+              out += '</tr>\n';
+              out += '</thead>\n';
+              return out;
+            };
+            tables.tr = function () {
+              var out,
+                  cs = [].slice.apply(arguments);
+              out = '<tr>\n';
+              out += tables.tds.apply(this, cs);
+              out += '</tr>\n';
+              return out;
+            };
+            filter = function (text) {
+              var i = 0, lines = text.split('\n'), line, hs, out = [];
+              for (i; i < lines.length; i += 1) {
+                line = lines[i];
+                // looks like a table heading
+                if (line.trim().match(/^[|].*[|]$/)) {
+                  line = line.trim();
+                  var tbl = [];
+                  tbl.push('<table>');
+                  hs = line.substring(1, line.length - 1).split('|');
+                  tbl.push(tables.thead.apply(this, hs));
+                  line = lines[++i];
+                  if (!line.trim().match(/^[|][-=|: ]+[|]$/)) {
+                    // not a table rolling back
+                    line = lines[--i];
+                  } else {
+                    line = lines[++i];
+                    tbl.push('<tbody>');
+                    while (line.trim().match(/^[|].*[|]$/)) {
+                      line = line.trim();
+                      tbl.push(tables.tr.apply(this, line.substring(1, line.length - 1).split('|')));
+                      line = lines[++i];
+                    }
+                    tbl.push('</tbody>');
+                    tbl.push('</table>');
+                    // we are done with this table and we move along
+                    out.push(tbl.join('\n'));
+                    continue;
+                  }
+                }
+                out.push(line);
+              }
+              return out.join('\n');
+            };
+            return [
+              {
+                type:   'lang',
+                filter: filter
+              }
+            ];
+          };
+
+          // Client-side export
+          if (typeof window !== 'undefined' && window.showdown && window.showdown.extensions) {
+            window.showdown.extensions.table = table;
+          }
+          // Server-side export
+          if (typeof module !== 'undefined') {
+            module.exports = table;
+          }
+        }());
+    </script>
+
+    <!-- 圆形按钮样式（添加文章） -->
+    <style>
+        .btn-circle {
+          position: fixed; //关键
+
+          width: 30px;
+          height: 30px;
+          text-align: center;
+          padding: 6px 0;
+          font-size: 12px;
+          line-height: 1.428571429;
+          border-radius: 15px;
+
+          bottom: 90px;
+          right: 50px;
+        }
+        .btn-circle.btn-lg {
+          width: 50px;
+          height: 50px;
+          padding: 10px 16px;
+          font-size: 18px;
+          line-height: 1.33;
+          border-radius: 25px;
+        }
+        .btn-circle.btn-xl {
+          width: 70px;
+          height: 70px;
+          padding: 10px 16px;
+          font-size: 24px;
+          line-height: 1.33;
+          border-radius: 35px;
+        }
+    </style>
+
 {% endblock container %}
-    

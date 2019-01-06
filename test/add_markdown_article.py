@@ -71,8 +71,14 @@ def generate_html(params=[]):
                     </div>
                     <form id="form_data">
                     <div class="modal-body">
-                        <textarea id="content" style="height:600px;width:45%%;float:left" onkeyup="compile()">%s</textarea>
-                        <div id="result" style="height:600px;width:45%%;float:left""></div>
+                            <div class="row">
+                                      <div class="col-md-6" style="float:left">                                 
+                                        <textarea id="content" onkeyup="compile()">%s</textarea>
+                                        </div>
+                                        <div id class="col-md-6" style="float:right">                                  
+                                        <textarea id="result" onkeyup=""></textarea>
+                                        </div>
+                                    </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">

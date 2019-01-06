@@ -66,7 +66,7 @@ def sign_up():
         else:
             sql = 'insert into users (username, password) values (?, ?)'
             params = [username, password]
-            insert(conn, sql, params)
+            execute(conn, sql, params)
 
             #是否自动登录并跳转
             #checkbox没选的话无此key值

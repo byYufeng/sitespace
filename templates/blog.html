@@ -14,8 +14,8 @@
                 <span>&nbsp;&nbsp;<span class="glyphicon glyphicon-time"></span>{{ article.publishtime }}</span>
                 <font size=3>
                     &nbsp;&nbsp;<a href="#" data-toggle="modal" data-target="#edit" onClick="EditArticle({{ article.id }})">编辑</a>
-                    &nbsp;&nbsp;<a href="#" data-toggle="modal" data-target="#hide">隐藏</a>
-                    &nbsp;&nbsp;<a href="#" data-toggle="modal" data-target="#remove">删除</a>
+                    <!-- &nbsp;&nbsp;<a href="#" onClick="DeleteArticle({{ article.id }})">删除</a> -->
+                    &nbsp;&nbsp;<a href="{{ url_for('blog.del_article') }}?id={{ article.id }}">删除</a>
                 </font>
             </p>
 
@@ -29,32 +29,15 @@
     </div>
 
     <!-- 添加文章 -->
-
-    <button type="button" class="btn btn-primary btn-circle btn-xl"><i class="glyphicon glyphicon-plus"></i></button>
-
-    <div id="add_article">
-    {% if session.logged_in %}
-        <form action="{{ url_for('blog.add_article') }}" method=post>
-            <div class="row">
-                <div class="col-md-4 col-md-offset-4">
-                    <div class="form-group">
-                        <input name="title" class="form-control" placeholder="Title" required autofocus>
-                    </div>
-                    <div class="form-group">
-                        <textarea name="text" class="form-control" placeholder="Text" required rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-lg btn-primary btn-block">Publish</button>
-                </div>
-            </div>
-        </form>
-    {% endif %}
-    </div>
+    <button type="button" class="btn btn-primary btn-circle btn-xl" data-toggle="modal" data-target="#edit" onClick="EditArticle(-1)">
+        <i class="glyphicon glyphicon-plus"></i>
+    </button>
 
     <!-- 模态弹出框（新建、编辑） -->
     <div class="modal fade" id="edit" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog" style="width: 80%;">
             <div class="modal-content">
-                <form id="article">
+                <form id="article"  action="{{ url_for('blog.add_article') }}" method=post>
                     <div class="modal-header">
                         <h4 class="modal-title form-group" id="myModalLabel">
                             <input name="title" id="article_title" class="form-control" placeholder="Title" required="" autofocus="" />
@@ -62,13 +45,14 @@
                     </div>
                     <div class="modal-body">
                         <div class="row form-group">
-                            <textarea id="article_text" class="col-xs-4 col-xs-offset-1" style="resize:None;height:0px;padding-bottom:45%" onkeyup="compile()" placeholder="{{ markdown_template }}"></textarea>
+                            <input name="id" id="article_id" type="hidden" class="form-control" />
+                            <textarea name="text" id="article_text" class="col-xs-4 col-xs-offset-1" style="resize:None;height:0px;padding-bottom:45%" onkeyup="compile()" placeholder="{{ markdown_template }}"></textarea>
                             <div id="markdown_result" class="col-xs-4 col-xs-offset-2" style="border-style: solid;border-width:1px;border-color:rgb(169, 169, 169);height:0px;padding-bottom:45%"></div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default form-group" data-dismiss="modal">关闭</button>
-                        <button type="button" class="btn btn-primary form-group">提交更改</button>
+                        <button type="submit" class="btn btn-primary form-group">提交更改</button>
                     </div>
                 </form>
             </div><!-- /.modal-content -->
@@ -81,8 +65,10 @@
         function EditArticle(article_id){
             title = $("#article_" + article_id + "_title").text();
             text = $("#article_" + article_id + "_text").text();
-            $("#article_title").text(title);
+            $("#article_id").val(article_id);
+            $("#article_title").val(title);
             $("#article_text").text(text);
+            compile();
         }
 
         // 即时编辑md文本
@@ -94,6 +80,17 @@
 
             var html = converter.makeHtml(text);
             document.getElementById("markdown_result").innerHTML = html;
+        }
+
+        function DeleteArticle(article_id){
+            $.ajax({
+async:false,
+                type: "post",
+                url: "{{ url_for('blog.del_article') }}",
+                data: {"id" : article_id},
+                success:function(result){               
+                }
+            });
         }
     </script>
 

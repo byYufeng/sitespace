@@ -17,12 +17,14 @@ def get_conn(database = 'data/' + database):
     conn.text_factory = str
     return conn
 
+
 def db_init(database):
     conn = get_conn('../../data/' + database)
     with open('schema.sql', mode='r') as fin:
         cursor = conn.cursor()
         cursor.executescript(fin.read())
     conn.commit()
+
 
 def select(conn, sql, params=None):
     cur = conn.cursor()
@@ -33,7 +35,8 @@ def select(conn, sql, params=None):
     result = cur.fetchall()
     return result
 
-def insert(conn, sql, params=None):
+
+def execute(conn, sql, params=None):
     cur = conn.cursor()
     if params:
         cur.execute(sql, params)
@@ -41,6 +44,7 @@ def insert(conn, sql, params=None):
         cur.execute(sql)
     conn.commit()
     return True
+
 
 def close_conn(conn):
     conn.close()

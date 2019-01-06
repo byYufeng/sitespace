@@ -21,7 +21,7 @@ def show_articles():
     fields = ['id', 'title', 'text', 'author', 'publishtime']
 
     conn = get_conn()
-    sql = 'select %s from articles order by id desc' % ','.join(fields)
+    sql = 'select %s from articles where hidden=0 or hidden is null order by id desc' % ','.join(fields)
     res = select(conn, sql)
     records = [result for result in res]
 
@@ -33,23 +33,74 @@ def show_articles():
     articles = [dict(zip(fields, record)) for record in records]
 
     # 读取markdown tutorial
-
-    print sys.path
     with open('test/markdown/markdown_template') as fin:
         markdown_template = fin.read()
     return render_template('blog.html', articles=articles, markdown_template=markdown_template)
 
 
-#检查登录状态并添加文章
+#检查登录状态并添加文章 (未登录可以发文 但不能编辑和删除)
 @blog.route('/add', methods=['POST'])
 def add_article():
     if not session.get('logged_in'):
-        abort(401)
+        pass
+        #abort(401)
+        #return redirect(url_for('blog.show_articles'))
+
+    article_id, title, text, author, publishtime = trans_data_to_str(int(request.form['id']), request.form['title'], request.form['text'], session.get('logged_in', 'Anonym'), time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+
+    #upsert
+    conn = get_conn()
+    res = select(conn, 'select * from articles where id=%s' % article_id)
+    if not res:
+        sql = 'insert into articles (title, text, author, publishtime) values ( ?, ?, ?, ?)'
+        params = [title, text, author, publishtime]
+        execute(conn, sql, params)
+
+        if author == 'Anonym':
+            flash('You have not been log in!Publish as Anonym.')
+        else:
+            flash('New article has been successfully published')
+    else:
+        original_author = res[0][3]
+        if author == original_author and author != 'Anonym':
+            sql = 'update articles set title=?, text=? where id = ?'
+            params = [title, text, article_id]
+            execute(conn, sql, params)
+
+            flash('Edit successed!')
+        else:
+            flash('Edit failed!You must have the right', 'error')
+            
+
+    return redirect(url_for('blog.show_articles'))
+
+
+#检查登录状态并删除文章(只有本人和root用户可以删)
+@blog.route('/del', methods=['GET', 'POST'])
+def del_article():
+    if not session.get('logged_in'):
+        #abort(401)
+        flash('Delete failed!You must log in to have the right!', 'error')
+        return redirect(url_for('blog.show_articles'))
+
+    if request.method == 'GET':
+        article_id = trans_data_to_str(int(request.args.get('id')))
+    elif request.method == 'POST':
+        article_id = trans_data_to_str(int(request.form.get('id')))
 
     conn = get_conn()
-    title, text, author, publishtime = trans_data_to_str(request.form['title'], request.form['text'], session.get('logged_in'), time.strftime("%Y-%m-%d", time.localtime()))
-    sql = 'insert into articles (title, text, author, publishtime) values (?, ?, ?, ?)'
-    params = [title, text, author, publishtime]
-    insert(conn, sql, params)
-    flash('New article has been successfully published')
+    res = select(conn, 'select * from articles where id=%s' % article_id)
+    original_author = res[0][3]
+    author = session.get('logged_in') 
+
+    if author == original_author or author == 'root':
+        sql = 'update articles set hidden=1 where id = ?'
+        params = [article_id]
+        execute(conn, sql, params)
+
+        flash('Delete successed!')
+    else:
+        flash('Delete failed!You must have the right!', 'error')
+            
+
     return redirect(url_for('blog.show_articles'))

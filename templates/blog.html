@@ -13,13 +13,24 @@
                 <span id="article_{{ article.id }}_author">{{ article.author }}</span>
                 <span>&nbsp;&nbsp;<span class="glyphicon glyphicon-time"></span>{{ article.publishtime }}</span>
                 <font size=3>
+                    &nbsp;&nbsp;<label id="article_{{ article.id }}_text_type">{{ article.text_type }}</label>
                     &nbsp;&nbsp;<a href="#" data-toggle="modal" data-target="#edit" onClick="EditArticle({{ article.id }})">编辑</a>
                     <!-- &nbsp;&nbsp;<a href="#" onClick="DeleteArticle({{ article.id }})">删除</a> -->
                     &nbsp;&nbsp;<a href="{{ url_for('blog.del_article') }}?id={{ article.id }}">删除</a>
                 </font>
             </p>
 
-            <p id="article_{{ article.id }}_text">{{ article.text | safe }}</p>
+            <!-- normal:将文本输入的\r\n换行符替换为html中的<br/>显示 markdown:翻译成markdown显示 -->
+            <!-- 暂时用隐藏形式保存原始文本 -->
+            <p id="article_{{ article.id }}_text" hidden>{{ article.text | safe }}</p>
+            {% autoescape false %}
+            <!-- 如果不启用autoescape 生成的<br/>会以字符的形式显示 -->
+                {% if article.text_type == 'normal' %}
+                    <p>{{ article.text | safe | replace('\r\n', '<br/>') }}</p>
+                {% elif article.text_type == 'markdown' %}
+                    <p>{{ article.text | safe }}</p>
+                {% endif %}
+            {% endautoescape %}
             <p><a href="#">查看全文</a></p> 
             <hr>
         </div/>
@@ -39,20 +50,36 @@
             <div class="modal-content">
                 <form id="article"  action="{{ url_for('blog.add_article') }}" method=post>
                     <div class="modal-header">
+                        <!-- 标题 -->
                         <h4 class="modal-title form-group" id="myModalLabel">
-                            <input name="title" id="article_title" class="form-control" placeholder="Title" required="" autofocus="" />
+                            <input name="title" id="article_title" class="form-control text-center" placeholder="Title" required="" autofocus="" />
                         </h4>
                     </div>
                     <div class="modal-body">
+                        <!-- 1-4-4-1布局 -->
                         <div class="row form-group">
                             <input name="id" id="article_id" type="hidden" class="form-control" />
                             <textarea name="text" id="article_text" class="col-xs-4 col-xs-offset-1" style="resize:None;height:0px;padding-bottom:45%" onkeyup="compile()" placeholder="{{ markdown_template }}"></textarea>
-                            <div id="markdown_result" class="col-xs-4 col-xs-offset-2" style="border-style: solid;border-width:1px;border-color:rgb(169, 169, 169);height:0px;padding-bottom:45%"></div>
+                            <!-- 文本类型 -->
+                            <div class="col-xs-2" >
+                                <div class="radio text-center">
+                                    <div><label>
+                                        <input type="radio" name="text_type" id="articleType1" value="normal" checked>Normal
+                                        &nbsp;&nbsp;&nbsp;
+                                    </label></div>
+                                    <div><label>
+                                    </label></div>
+                                    <div><label>
+                                        <input type="radio" name="text_type" id="articleType2" value="markdown">Markdown
+                                    </label></div>
+                                </div>
+                            </div>
+                            <div id="markdown_result" class="col-xs-4" style="border-style: solid;border-width:1px;border-color:rgb(169, 169, 169);height:0px;padding-bottom:45%"></div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default form-group" data-dismiss="modal">关闭</button>
-                        <button type="submit" class="btn btn-primary form-group">提交更改</button>
+                        <button type="submit" class="btn btn-primary form-group" onClick="commit_article_type()">提交更改</button>
                     </div>
                 </form>
             </div><!-- /.modal-content -->
@@ -63,23 +90,33 @@
     <script>
         // 给弹出的模态框传入编辑内容
         function EditArticle(article_id){
-            title = $("#article_" + article_id + "_title").text();
-            text = $("#article_" + article_id + "_text").text();
+            var title = $("#article_" + article_id + "_title").text();
+            var text = $("#article_" + article_id + "_text").text();
+            var text_type = $("#article_" + article_id + "_text_type").text();
             $("#article_id").val(article_id);
             $("#article_title").val(title);
             $("#article_text").text(text);
+            if(text_type != ''){
+                $("input[name='text_type'][value="+text_type+"]").attr("checked", true);
+            }
             compile();
         }
 
         // 即时编辑md文本
         function compile(){
-            var text = document.getElementById("article_text").value;
+            var article_id = $("#article_id").val();
             var text = $("#article_text").val();
-            //var converter = new showdown.Converter();
-            var converter = new showdown.Converter({extensions: ['table']});
+            var text_type = $("#article_" + article_id + "_text_type").text();
 
-            var html = converter.makeHtml(text);
-            document.getElementById("markdown_result").innerHTML = html;
+            if(text_type == 'normal'){
+                $("#markdown_result").html(text);
+            }
+            else{
+                //var converter = new showdown.Converter();
+                var converter = new showdown.Converter({extensions: ['table']});
+                var html = converter.makeHtml(text);
+                document.getElementById("markdown_result").innerHTML = html;
+            }
         }
 
         function DeleteArticle(article_id){
@@ -95,124 +132,8 @@ async:false,
     </script>
 
     <!-- markdown插件和table扩展插件 -->
-    <script src="https://cdn.bootcss.com/showdown/1.8.6/showdown.js"></script>
-    <script>
-        /*
-         * Basic table support with re-entrant parsing, where cell content
-         * can also specify markdown.
-         *
-         * Tables
-         * ======
-         *
-         * | Col 1   | Col 2                                              |
-         * |======== |====================================================|
-         * |**bold** | ![Valid XHTML] (http://w3.org/Icons/valid-xhtml10) |
-         * | Plain   | Value                                              |
-         *
-         */
-
-        (function () {
-          'use strict';
-
-          var table = function (converter) {
-
-            var tables = {}, style = 'text-align:left;', filter;
-            tables.th = function (header) {
-              if (header.trim() === '') {
-                return '';
-              }
-              var id = header.trim().replace(/ /g, '_').toLowerCase();
-              return '<th id="' + id + '" style="' + style + '">' + header + '</th>';
-            };
-            tables.td = function (cell) {
-              return '<td style="' + style + '">' + converter.makeHtml(cell) + '</td>';
-            };
-            tables.ths = function () {
-              var out = '',
-                  i = 0,
-                  hs = [].slice.apply(arguments);
-              for (i; i < hs.length; i += 1) {
-                out += tables.th(hs[i]) + '\n';
-              }
-              return out;
-            };
-            tables.tds = function () {
-              var out = '', i = 0, ds = [].slice.apply(arguments);
-              for (i; i < ds.length; i += 1) {
-                out += tables.td(ds[i]) + '\n';
-              }
-              return out;
-            };
-            tables.thead = function () {
-              var out,
-                  hs = [].slice.apply(arguments);
-              out = '<thead>\n';
-              out += '<tr>\n';
-              out += tables.ths.apply(this, hs);
-              out += '</tr>\n';
-              out += '</thead>\n';
-              return out;
-            };
-            tables.tr = function () {
-              var out,
-                  cs = [].slice.apply(arguments);
-              out = '<tr>\n';
-              out += tables.tds.apply(this, cs);
-              out += '</tr>\n';
-              return out;
-            };
-            filter = function (text) {
-              var i = 0, lines = text.split('\n'), line, hs, out = [];
-              for (i; i < lines.length; i += 1) {
-                line = lines[i];
-                // looks like a table heading
-                if (line.trim().match(/^[|].*[|]$/)) {
-                  line = line.trim();
-                  var tbl = [];
-                  tbl.push('<table>');
-                  hs = line.substring(1, line.length - 1).split('|');
-                  tbl.push(tables.thead.apply(this, hs));
-                  line = lines[++i];
-                  if (!line.trim().match(/^[|][-=|: ]+[|]$/)) {
-                    // not a table rolling back
-                    line = lines[--i];
-                  } else {
-                    line = lines[++i];
-                    tbl.push('<tbody>');
-                    while (line.trim().match(/^[|].*[|]$/)) {
-                      line = line.trim();
-                      tbl.push(tables.tr.apply(this, line.substring(1, line.length - 1).split('|')));
-                      line = lines[++i];
-                    }
-                    tbl.push('</tbody>');
-                    tbl.push('</table>');
-                    // we are done with this table and we move along
-                    out.push(tbl.join('\n'));
-                    continue;
-                  }
-                }
-                out.push(line);
-              }
-              return out.join('\n');
-            };
-            return [
-              {
-                type:   'lang',
-                filter: filter
-              }
-            ];
-          };
-
-          // Client-side export
-          if (typeof window !== 'undefined' && window.showdown && window.showdown.extensions) {
-            window.showdown.extensions.table = table;
-          }
-          // Server-side export
-          if (typeof module !== 'undefined') {
-            module.exports = table;
-          }
-        }());
-    </script>
+    <script src="/static/showdown.js"></script>
+    <script src="/static/showdown-table.js"></script>
 
     <!-- 圆形按钮样式（添加文章） -->
     <style>

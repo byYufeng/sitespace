@@ -11,50 +11,58 @@ from flask import Blueprint, render_template, session, request, flash, redirect,
 from utils.db.db_sqlite import *
 from utils.common import trans_data_to_str
 
-
 blog = Blueprint('blog', __name__)
 
 
 #首页展示
 @blog.route('/show')
 def show_articles():
-    fields = ['id', 'title', 'text', 'author', 'publishtime']
+    fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime']
 
     conn = get_conn()
     sql = 'select %s from articles where hidden=0 or hidden is null order by id desc' % ','.join(fields)
     res = select(conn, sql)
     records = [result for result in res]
-
-    # 将文本的\r\n换行符替换为html的<br/>
-    for i in range(len(records)):
-        record = list(records[i])
-        record[2] = str(record[2]).replace('\r\n', '<br/>').replace('\r', '<br/>').replace('\n', '<br/>')
-        records[i] = record
     articles = [dict(zip(fields, record)) for record in records]
+    for a in articles[:3]:
+        print a
 
-    # 读取markdown tutorial
+    # 读取markdown tutorial作为placeholder
     with open('test/markdown/markdown_template') as fin:
         markdown_template = fin.read()
     return render_template('blog.html', articles=articles, markdown_template=markdown_template)
 
 
-#检查登录状态并添加文章 (未登录可以发文 但不能编辑和删除)
+#检查登录状态并添加/修改文章 
 @blog.route('/add', methods=['POST'])
 def add_article():
+    #(未登录可以发文 但不能编辑和删除)
     if not session.get('logged_in'):
         pass
         #abort(401)
         #return redirect(url_for('blog.show_articles'))
 
-    article_id, title, text, author, publishtime = trans_data_to_str(int(request.form['id']), request.form['title'], request.form['text'], session.get('logged_in', 'Anonym'), time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    params = {
+                'id': int(request.form.get('id')), 
+                'title': request.form.get('title'),
+                'text': request.form.get('text'),
+                'author': session.get('logged_in', 'Anonym'),
+                'text_type':request.form.get('text_type'),
+                'publishtime':time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            }
+    params = {k: trans_data_to_str(params.get(k)) for k in params}
+    article_id = params.get('id')
+    author = params.get('author')
+    #print request.form
 
     #upsert
     conn = get_conn()
     res = select(conn, 'select * from articles where id=%s' % article_id)
     if not res:
-        sql = 'insert into articles (title, text, author, publishtime) values ( ?, ?, ?, ?)'
-        params = [title, text, author, publishtime]
-        execute(conn, sql, params)
+        fields = [k for k in params if k != 'id']
+        sql = 'insert into articles (%s) values (%s)' % (','.join(fields), ','.join(["?"] * len(fields)))
+        #print params
+        execute(conn, sql, [params[k] for k in fields])
 
         if author == 'Anonym':
             flash('You have not been log in!Publish as Anonym.')
@@ -63,8 +71,8 @@ def add_article():
     else:
         original_author = res[0][3]
         if author == original_author and author != 'Anonym':
-            sql = 'update articles set title=?, text=? where id = ?'
-            params = [title, text, article_id]
+            sql = 'update articles set title=?, text=?, text_type=? where id = ?'
+            params = [params.get('title'), params.get('text'), params.get('text_type'), params.get('id')]
             execute(conn, sql, params)
 
             flash('Edit successed!')

@@ -22,17 +22,23 @@
 
             <!-- normal:将文本输入的\r\n换行符替换为html中的<br/>显示 markdown:翻译成markdown显示 -->
             <!-- 暂时用隐藏形式保存原始文本 -->
-            <p id="article_{{ article.id }}_text" hidden>{{ article.text | safe }}</p>
-            {% autoescape false %}
-            <!-- 如果不启用autoescape 生成的<br/>会以字符的形式显示 -->
-                {% if article.text_type == 'normal' %}
-                    <p>{{ article.text | safe | replace('\r\n', '<br/>') }}</p>
-                {% elif article.text_type == 'markdown' %}
-                    <p>{{ article.text | safe }}</p>
-                {% endif %}
-            {% endautoescape %}
-            <p><a href="#">查看全文</a></p> 
-            <hr>
+            <div>
+                <!-- 如果这里的p标签改为div 则会导致编辑时卡死 暂不知道原因 -->
+                <p id="article_{{ article.id }}_original_text" hidden>{{ article.text | safe }}</p>
+                <div id="article_{{ article.id }}_text">
+                    {% autoescape false %}
+                    <!-- 如果不启用autoescape 生成的<br/>会以字符的形式显示 -->
+                        {% if article.text_type == 'normal' %}
+                            <p>{{ article.text | safe | replace('\r\n', '<br/>') }}</p>
+                        {% elif article.text_type == 'markdown' %}
+                        <!-- <p onload="compile_onload({{ article.id }})">{{ article.text | safe }}</p> -->
+                            <p>{{ article.text | safe }}</p>
+                        {% endif %}
+                    {% endautoescape %}
+                </div>
+                <p><a href="#">查看全文</a></p> 
+                <hr>
+            </div>
         </div/>
     {% else %}
         <em>This guy is so lazy...</em>
@@ -86,12 +92,34 @@
         </div><!-- /.modal -->
     </div>
 
+    <!-- markdown插件和table扩展插件 -->
+    <script src="/static/showdown.js"></script>
+    <script src="/static/showdown-table.js"></script>
+    <script>
+        // 在网页展示编译过的文本
+        function compile_onload(article_id){
+            var text = $("#article_" + article_id + "_original_text").text();
+            var text_type = $("#article_" + article_id + "_text_type").text();
+            if(text_type == 'normal'){
+                //$("#markdown_result").html(text);
+            }
+            else{
+                //var converter = new showdown.Converter();
+                var converter = new showdown.Converter({extensions: ['table']});
+                var html = converter.makeHtml(text);
+                document.getElementById("article_" + article_id + "_text").innerHTML = html;
+            }
+        }
 
+        {% for article in articles %}
+            compile_onload({{ article.id }});
+        {% endfor %}
+    </script>
     <script>
         // 给弹出的模态框传入编辑内容
         function EditArticle(article_id){
             var title = $("#article_" + article_id + "_title").text();
-            var text = $("#article_" + article_id + "_text").text();
+            var text = $("#article_" + article_id + "_original_text").text();
             var text_type = $("#article_" + article_id + "_text_type").text();
             $("#article_id").val(article_id);
             $("#article_title").val(title);
@@ -102,7 +130,7 @@
             compile();
         }
 
-        // 即时编辑md文本
+        // 即时编译模态框的md文本
         function compile(){
             var article_id = $("#article_id").val();
             var text = $("#article_text").val();
@@ -131,9 +159,6 @@ async:false,
         }
     </script>
 
-    <!-- markdown插件和table扩展插件 -->
-    <script src="/static/showdown.js"></script>
-    <script src="/static/showdown-table.js"></script>
 
     <!-- 圆形按钮样式（添加文章） -->
     <style>

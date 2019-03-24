@@ -16,6 +16,7 @@ import logging
 
 def main():
     debug = True
+    debug = False
     host = '0.0.0.0'
     port = 6080 if len(sys.argv) < 2 else int(sys.argv[1])
     create_app().run(debug=debug, port=port, host=host)

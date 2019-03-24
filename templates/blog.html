@@ -20,21 +20,11 @@
                 </font>
             </p>
 
-            <!-- normal:将文本输入的\r\n换行符替换为html中的<br/>显示 markdown:翻译成markdown显示 -->
-            <!-- 暂时用隐藏形式保存原始文本 -->
             <div>
+                <!-- 因为后面会渲染和转义 所以此处用隐藏标签保存原始文本 -->
                 <!-- 如果这里的p标签改为div 则会导致编辑时卡死 暂不知道原因 -->
                 <p id="article_{{ article.id }}_original_text" hidden>{{ article.text | safe }}</p>
                 <div id="article_{{ article.id }}_text">
-                    {% autoescape false %}
-                    <!-- 如果不启用autoescape 生成的<br/>会以字符的形式显示 -->
-                        {% if article.text_type == 'normal' %}
-                            <p>{{ article.text | safe | replace('\r\n', '<br/>') }}</p>
-                        {% elif article.text_type == 'markdown' %}
-                        <!-- <p onload="compile_onload({{ article.id }})">{{ article.text | safe }}</p> -->
-                            <p>{{ article.text | safe }}</p>
-                        {% endif %}
-                    {% endautoescape %}
                 </div>
                 <p><a href="#">查看全文</a></p> 
                 <hr>
@@ -65,7 +55,7 @@
                         <!-- 1-4-4-1布局 -->
                         <div class="row form-group">
                             <input name="id" id="article_id" type="hidden" class="form-control" />
-                            <textarea name="text" id="article_text" class="col-xs-4 col-xs-offset-1" style="resize:None;height:0px;padding-bottom:45%" onkeyup="compile()" placeholder="{{ markdown_template }}"></textarea>
+                            <textarea name="text" id="article_text" class="col-xs-4 col-xs-offset-1" style="resize:None;height:0px;padding-bottom:45%" onkeyup="compile_instant()" placeholder="{{ markdown_template }}"></textarea>
                             <!-- 文本类型 -->
                             <div class="col-xs-2" >
                                 <div class="radio text-center">
@@ -85,7 +75,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default form-group" data-dismiss="modal">关闭</button>
-                        <button type="submit" class="btn btn-primary form-group" onClick="commit_article_type()">提交更改</button>
+                        <button type="submit" class="btn btn-primary form-group" >提交更改</button>
                     </div>
                 </form>
             </div><!-- /.modal-content -->
@@ -96,19 +86,24 @@
     <script src="/static/showdown.js"></script>
     <script src="/static/showdown-table.js"></script>
     <script>
-        // 在网页展示编译过的文本
+        // 显示编译过的文本 若为normal:将文本输入的\r\n换行符替换为html中的<br/> 若为markdown:转换成markdown结果
+        var converter = new showdown.Converter({extensions: ['table']});
+        function compile(text, text_type){
+            if(text_type == 'normal'){
+                //此处replace若使用正则则不能加引号，直接当做正则对象使用（算是个语法糖）
+                return text.replace(/\n/g, '<br/>'); 
+            }
+            else {
+                //var converter = new showdown.Converter();
+                return converter.makeHtml(text);
+            }
+        }
+    </script>
+    <script>
         function compile_onload(article_id){
             var text = $("#article_" + article_id + "_original_text").text();
             var text_type = $("#article_" + article_id + "_text_type").text();
-            if(text_type == 'normal'){
-                //$("#markdown_result").html(text);
-            }
-            else{
-                //var converter = new showdown.Converter();
-                var converter = new showdown.Converter({extensions: ['table']});
-                var html = converter.makeHtml(text);
-                document.getElementById("article_" + article_id + "_text").innerHTML = html;
-            }
+            document.getElementById("article_" + article_id + "_text").innerHTML = compile(text, text_type);
         }
 
         {% for article in articles %}
@@ -116,7 +111,7 @@
         {% endfor %}
     </script>
     <script>
-        // 给弹出的模态框传入编辑内容
+        // 给弹出的模态框传入原始内容
         function EditArticle(article_id){
             var title = $("#article_" + article_id + "_title").text();
             var text = $("#article_" + article_id + "_original_text").text();
@@ -127,29 +122,28 @@
             if(text_type != ''){
                 $("input[name='text_type'][value="+text_type+"]").attr("checked", true);
             }
-            compile();
+            compile_instant();
         }
 
-        // 即时编译模态框的md文本
-        function compile(){
+        // 若更改类型，则触发编译更新
+        $('input[name="text_type"]').change(
+            function() {
+                compile_instant();
+            }
+        )
+
+        // 即时编译模态框的文本
+        function compile_instant(){
             var article_id = $("#article_id").val();
             var text = $("#article_text").val();
-            var text_type = $("#article_" + article_id + "_text_type").text();
+            var text_type = $("input[name='text_type']:checked").val();
 
-            if(text_type == 'normal'){
-                $("#markdown_result").html(text);
-            }
-            else{
-                //var converter = new showdown.Converter();
-                var converter = new showdown.Converter({extensions: ['table']});
-                var html = converter.makeHtml(text);
-                document.getElementById("markdown_result").innerHTML = html;
-            }
+            $("#markdown_result").html(compile(text, text_type));
         }
 
         function DeleteArticle(article_id){
             $.ajax({
-async:false,
+                async:false,
                 type: "post",
                 url: "{{ url_for('blog.del_article') }}",
                 data: {"id" : article_id},

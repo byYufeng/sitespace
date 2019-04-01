@@ -28,7 +28,7 @@ def show_articles():
         print a
 
     # 读取markdown tutorial作为placeholder
-    with open('test/markdown/markdown_template') as fin:
+    with open('static/markdown_template') as fin:
         markdown_template = fin.read()
     return render_template('blog.html', articles=articles, markdown_template=markdown_template)
 
@@ -83,7 +83,7 @@ def add_article():
     return redirect(url_for('blog.show_articles'))
 
 
-#检查登录状态并删除文章(只有本人和root用户可以删)
+#删除文章(先检查登陆状态 只有本人和root用户可以删)
 @blog.route('/del', methods=['GET', 'POST'])
 def del_article():
     if not session.get('logged_in'):

@@ -10,13 +10,35 @@
             </h2>
 
             <p class="lead">
-                <span id="article_{{ article.id }}_author">{{ article.author }}</span>
-                <span>&nbsp;&nbsp;<span class="glyphicon glyphicon-time"></span>{{ article.publishtime }}</span>
+                <span class="glyphicon glyphicon-user"></span>
+                <span id="article_{{ article.id }}_author">
+                    {{ article.author }}
+                </span>
+
                 <font size=3>
-                    &nbsp;&nbsp;<label id="article_{{ article.id }}_text_type">{{ article.text_type }}</label>
-                    &nbsp;&nbsp;<a href="#" data-toggle="modal" data-target="#edit" onClick="EditArticle({{ article.id }})">编辑</a>
-                    <!-- &nbsp;&nbsp;<a href="#" onClick="DeleteArticle({{ article.id }})">删除</a> -->
-                    &nbsp;&nbsp;<a href="{{ url_for('blog.del_article') }}?id={{ article.id }}">删除</a>
+                    <span>
+                        &nbsp;&nbsp;<span class="glyphicon glyphicon-time"></span>
+                        {{ article.publishtime }}
+                    </span>
+                    <span>
+                        &nbsp;&nbsp;<span class="glyphicon glyphicon-list"></span>
+                        <label id="article_{{ article.id }}_text_type">{{ article.text_type }}</label>
+                    </span>
+                    <!--
+                    <span>
+                        &nbsp;&nbsp;<span class="glyphicon glyphicon-list"></span>
+                        <label id="article_{{ article.permission_public }}_permission">{{ article.permission_public }}</label>
+                    </span>
+                    -->
+                    <span>
+                        &nbsp;&nbsp;<span class="glyphicon glyphicon-edit"></span>
+                        <a href="#" data-toggle="modal" data-target="#edit" onClick="EditArticle({{ article.id }})">编辑</a>
+                    </span>
+                    <span>
+                        <!-- &nbsp;&nbsp;<a href="#" onClick="DeleteArticle({{ article.id }})">删除</a> -->
+                        &nbsp;&nbsp;<span class="glyphicon glyphicon-trash"></span>
+                        <a href="{{ url_for('blog.del_article') }}?id={{ article.id }}">删除</a>
+                    </span>
                 </font>
             </p>
 
@@ -60,13 +82,13 @@
                             <div class="col-xs-2" >
                                 <div class="radio text-center">
                                     <div><label>
-                                        <input type="radio" name="text_type" id="articleType1" value="normal" checked>Normal
+                                        <input type="radio" name="text_type" id="articleType1" value="normal">Normal
                                         &nbsp;&nbsp;&nbsp;
                                     </label></div>
                                     <div><label>
                                     </label></div>
                                     <div><label>
-                                        <input type="radio" name="text_type" id="articleType2" value="markdown">Markdown
+                                        <input type="radio" name="text_type" id="articleType2" value="markdown" checked>Markdown
                                     </label></div>
                                 </div>
                             </div>
@@ -84,10 +106,15 @@
 
     <!-- markdown插件和table扩展插件 -->
     <script src="/static/showdown.js"></script>
-    <script src="/static/showdown-table.js"></script>
+    <script src="/static/showdown-toc.js"></script>
     <script>
-        // 显示编译过的文本 若为normal:将文本输入的\r\n换行符替换为html中的<br/> 若为markdown:转换成markdown结果
-        var converter = new showdown.Converter({extensions: ['table']});
+        // 将文档编译后展示 若为normal:将文本输入的\r\n换行符替换为html中的<br/> 若为markdown:转换成markdown结果
+        // var converter = new showdown.Converter({extensions: ['table']}); // 
+        var converter = new showdown.Converter({
+            tables: true,  // table默认是没有边框等样式的 需后续自己加上
+            extensions: [
+                //"showdown-toc" //这个toc插件也不可用
+        ]});
         function compile(text, text_type){
             if(text_type == 'normal'){
                 //此处replace若使用正则则不能加引号，直接当做正则对象使用（算是个语法糖）
@@ -125,7 +152,7 @@
             compile_instant();
         }
 
-        // 若更改类型，则触发编译更新
+        // 若文档类型变化，则触发编译更新
         $('input[name="text_type"]').change(
             function() {
                 compile_instant();

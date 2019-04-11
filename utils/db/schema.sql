@@ -14,7 +14,9 @@ create table articles(
     title string not null,
     text string not null,
     author string not null,
-    publishtime text not null
+    publishtime text not null,
+    text_type string default 'normal' not null,
+    visiable int default 1 not null
 );
 
 create table modules(

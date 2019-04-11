@@ -33,7 +33,8 @@ def sign_in():
             if password == PASSWORD:
                 session['logged_in'] = username
                 flash('You have benn logged in...')
-                return redirect(url_for('home.homepage'))
+                #return redirect(url_for('home.homepage'))
+                return redirect(url_for('blog.show_articles'))
             else:
                 error = 'Invalid password'
                 return render_template('sign_in.html', error=error)
@@ -86,4 +87,5 @@ def sign_up():
 def sign_out():
     session.pop('logged_in', None)
     flash('You have been logged out')
-    return redirect(url_for('home.homepage'))
+    #return redirect(url_for('home.homepage'))
+    return redirect(url_for('blog.show_articles'))

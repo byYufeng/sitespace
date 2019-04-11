@@ -95,12 +95,22 @@ def main():
 ```
 
 
-<!-- 9.转义 -->
-<!-- 反引号 -->
-\*嘿嘿*哈哈*哦哦
+<!-- 9.删除线 -->
+<!-- 使用两个波浪号 -->
+~~此段文本应被删除~~
 
 
-<!-- 10.其他 -->
+<!-- 10.转义 -->
+<!-- 反斜杠 -->
+\*哈哈*呵呵*哦哦
+
+
+<!-- 项目状态 -->
 [![GitHub issues](https://img.shields.io/github/issues/byYufeng/riven.svg)](https://github.com/byYufeng/riven/issues)
 [![GitHub forks](https://img.shields.io/github/forks/byYufeng/riven.svg)](https://github.com/byYufeng/riven/network)
 [![GitHub stars](https://img.shields.io/github/stars/byYufeng/riven.svg)](https://github.com/byYufeng/riven/stargazers)
+
+
+<!-- 其他 -->
+Ref:  
+https://lfkdsk.github.io/2017/02/24/translate-md/index.html

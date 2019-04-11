@@ -10,7 +10,13 @@ import os, sqlite3
 
 database = 'mysitespace.db'
 
-#模块被导入使用时，db路径其实是在入口模块（..）下 所以需修正到db目录
+def main():
+    db_init(database)
+    #print 'init db ok!'
+    #test()
+
+
+#模块被导入使用时，当前路径是在导入方的当前路径下 所以需修正到db目录
 def get_conn(database = 'data/' + database):
     conn = sqlite3.connect(database)
     #conn.row_factory = sqlite3.Row
@@ -59,8 +65,6 @@ def test():
     result = select(conn, 'select * from users')
     print result
 
-if __name__ == "__main__":
-    db_init(database)
-    #print 'init db ok!'
 
-    #test()
+if __name__ == "__main__":
+    main()

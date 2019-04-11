@@ -24,6 +24,7 @@ def show_articles():
     user = session.get('logged_in', 'Anonym') 
     conn = get_conn()
     sql = 'select %s from articles where visiable=1 or (visiable=0 and author="%s") order by id desc' % (','.join(fields), user)
+    sql += ' limit 10'
     res = select(conn, sql)
     records = [result for result in res]
     articles = [dict(zip(fields, record)) for record in records]
@@ -48,45 +49,47 @@ def show_articles():
 @blog.route('/add', methods=['POST'])
 def add_article():
     #(未登录默认为匿名用户，可以发文，但固定为所有人可见，并且发布后不能编辑和删除)
+    fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime', 'visiable']
     user = session.get('logged_in', 'Anonym') 
     if user == 'Anonym':
         pass
         #abort(401)
         #return redirect(url_for('blog.show_articles'))
 
-    params = {
-                'id': int(request.form.get('id')), 
-                'title': request.form.get('title'),
-                'text': request.form.get('text'),
-                'author': user,
-                'text_type':request.form.get('text_type'),
-                'publishtime':time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-                'visiable': 1,
-            }
-    params = {k: trans_data_to_str(params.get(k)) for k in params}
-    article_id = params.get('id')
-    author = params.get('author')
     #print request.form
+    params = {k:request.form.get(k) for k in fields}
+    params['id'] = int(params.get('id'))
+    params['author'] = user
+    params['publishtime'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    params = {k: trans_data_to_str(params.get(k)) for k in params}
+
+    # 做回一些枚举值的映射
+    if params['visiable'] == '所有人可见':
+        params['visiable'] = 1
+    if params['visiable'] == '仅自己可见':
+        params['visiable'] = 0
+
+    article_id = params.get('id')
+    insert_fields = [k for k in params if k != 'id']
+    update_fields = [k for k in params if k not in ['id', 'author', 'publishtime']]
 
     #upsert
     conn = get_conn()
     res = select(conn, 'select * from articles where id=%s' % article_id)
-    if not res:
-        fields = [k for k in params if k != 'id']
-        sql = 'insert into articles (%s) values (%s)' % (','.join(fields), ','.join(["?"] * len(fields)))
-        #print params
-        execute(conn, sql, [params[k] for k in fields])
+    if not res: # insert
+        sql = 'insert into articles (%s) values (%s)' % (', '.join(insert_fields), ', '.join(["?"] * len(insert_fields)))
+        execute(conn, sql, [params[k] for k in insert_fields])
 
-        if author == 'Anonym':
+        if user == 'Anonym':
             flash('You have not been log in!Publish as Anonym.')
         else:
             flash('New article has been successfully published')
-    else:
+    else: # update
         original_author = res[0][3]
-        if author == original_author and author != 'Anonym':
+        if user == original_author and user != 'Anonym':
             sql = 'update articles set title=?, text=?, text_type=? where id = ?'
-            params = [params.get('title'), params.get('text'), params.get('text_type'), params.get('id')]
-            execute(conn, sql, params)
+            sql = 'update articles set %s where id = %s' % (', '.join(['%s=?' % x for x in update_fields]), article_id)
+            execute(conn, sql, [params[k] for k in update_fields])
 
             flash('Edit successed!')
         else:

@@ -18,23 +18,26 @@ blog = Blueprint('blog', __name__)
 #只能查看所有人可见和登陆者自己可见的
 @blog.route('/show')
 def show_articles():
-    fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime', 'visiable']
+    fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime', 'visiable', 'sticktime']
     page_size = 10
 
     user = session.get('logged_in', 'Anonym') 
     conn = get_conn()
-    sql = 'select %s from articles where visiable=1 or (visiable=0 and author="%s") order by id desc' % (','.join(fields), user)
-    sql += ' limit 10'
+    sql = 'select %s from articles where visiable=1 or (visiable=0 and author="%s") ' % (','.join(fields), user)
+    #sql += 'order by id desc'
+    sql += 'order by sticktime desc, id desc'
+    sql += ' limit %s' % page_size
     res = select(conn, sql)
     records = [result for result in res]
     articles = [dict(zip(fields, record)) for record in records]
 
-    # 做一些枚举值的映射
+    # 做枚举值的映射:visiable/sticktime
     for article in articles:
         if article['visiable'] == 1:
             article['visiable'] = '所有人可见'
         if article['visiable'] == 0:
             article['visiable'] = '仅自己可见'
+
     print 'user:%s' % user
     for a in articles[:3]:
         print a
@@ -58,7 +61,8 @@ def add_article():
 
     #print request.form
     params = {k:request.form.get(k) for k in fields}
-    params['id'] = int(params.get('id'))
+    article_id = int(params.get('id'))
+    params['id'] = article_id
     params['author'] = user
     params['publishtime'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     params = {k: trans_data_to_str(params.get(k)) for k in params}
@@ -69,7 +73,6 @@ def add_article():
     if params['visiable'] == '仅自己可见':
         params['visiable'] = 0
 
-    article_id = params.get('id')
     insert_fields = [k for k in params if k != 'id']
     update_fields = [k for k in params if k not in ['id', 'author', 'publishtime']]
 
@@ -94,12 +97,11 @@ def add_article():
             flash('Edit successed!')
         else:
             flash('Edit failed!You must have the right', 'error')
-            
 
     return redirect(url_for('blog.show_articles'))
 
 
-#删除文章(先检查登陆状态 只有本人和root用户可以删)
+# 删除文章(先检查登陆状态 只有本人和root用户可以删)
 @blog.route('/del', methods=['GET', 'POST'])
 def del_article():
     if not session.get('logged_in'):
@@ -107,6 +109,7 @@ def del_article():
         flash('Delete failed!You must log in to have the right!', 'error')
         return redirect(url_for('blog.show_articles'))
 
+    user = session.get('logged_in') 
     if request.method == 'GET':
         article_id = trans_data_to_str(int(request.args.get('id')))
     elif request.method == 'POST':
@@ -115,7 +118,6 @@ def del_article():
     conn = get_conn()
     res = select(conn, 'select * from articles where id=%s' % article_id)
     original_author = res[0][3]
-    user = session.get('logged_in') 
 
     if user == original_author or user == 'root':
         sql = 'update articles set visiable=-1 where id = ?'
@@ -125,5 +127,40 @@ def del_article():
         flash('Delete successed!')
     else:
         flash('Delete failed!You must have the right!', 'error')
+            
+    return redirect(url_for('blog.show_articles'))
+
+
+# 置顶文章(先检查登陆状态 只有本人和root用户可以置顶)
+@blog.route('/stick', methods=['GET', 'POST'])
+def stick_article():
+    if not session.get('logged_in'):
+        #abort(401)
+        flash('Delete failed!You must log in to have the right!', 'error')
+        return redirect(url_for('blog.show_articles'))
+
+    user = session.get('logged_in') 
+    if request.method == 'GET':
+        article_id = trans_data_to_str(int(request.args.get('id')))
+    elif request.method == 'POST':
+        article_id = trans_data_to_str(int(request.form.get('id')))
+    stick_status = request.form.get('stick_status')
+    if stick_status == 'true':
+        stick_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    if stick_status == 'false':
+        stick_time = ''
+
+    conn = get_conn()
+    res = select(conn, 'select * from articles where id=%s' % article_id)
+    original_author = res[0][3]
+
+    if user == original_author or user == 'root':
+        sql = 'update articles set sticktime=? where id = ?'
+        params = [stick_time, article_id]
+        execute(conn, sql, params)
+
+        flash('Stick successed!')
+    else:
+        flash('Stick article failed!You must have the right!', 'error')
             
     return redirect(url_for('blog.show_articles'))

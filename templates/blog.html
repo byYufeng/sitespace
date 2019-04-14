@@ -38,8 +38,8 @@
                     <!-- 置顶、编辑、删除 -->
                     <span>
                         &nbsp;&nbsp;<span class="glyphicon glyphicon-arrow-up"></span>
-                        <label id="article_{{ article.permission_public }}_permission">{{ article.permission_public }}</label>
-                        <input type="checkbox" name="public" value="1"/>
+                        置顶
+                        <input type="checkbox" name="sticktime" id="article_{{ article.id }}_sticktime" value="{{ article.sticktime }}"/>
                     </span>
                     <span>
                         &nbsp;&nbsp;<span class="glyphicon glyphicon-edit"></span>
@@ -131,9 +131,10 @@
     </div>
 
     <!-- markdown插件和table扩展插件 -->
+    <!-- <script src="/static/showdown-toc.js"></script> -->
     <script src="/static/showdown.js"></script>
-    <script src="/static/showdown-toc.js"></script>
     <script>
+        // **md编译相关函数**
         // 将文档编译后展示 若为normal:将文本输入的\r\n换行符替换为html中的<br/> 若为markdown:转换成markdown结果
         // var converter = new showdown.Converter({extensions: ['table']}); // 
         var converter = new showdown.Converter({
@@ -152,17 +153,27 @@
         }
     </script>
     <script>
+        // **内容加载相关函数**
         function compile_onload(article_id){
             var text = $("#article_" + article_id + "_original_text").text();
             var text_type = $("#article_" + article_id + "_text_type").text();
             document.getElementById("article_" + article_id + "_text").innerHTML = compile(text, text_type);
         }
 
+        function init_onload(article_id){
+            sticktime = $("#article_" + article_id + "_sticktime").val();
+            if(sticktime != ""){
+                $("#article_" + article_id + "_sticktime").attr("checked", true);
+            }
+        }
+
         {% for article in articles %}
             compile_onload({{ article.id }});
+            init_onload({{ article.id }})
         {% endfor %}
     </script>
     <script>
+        // **编辑框相关函数**
         // 编辑/新增按钮：给弹出的模态框传入原始内容
         function EditArticle(article_id){
             var title = $("#article_" + article_id + "_title").text();
@@ -177,12 +188,11 @@
             compile_instant();
         }
 
-        // 若文档类型变化，则触发编译更新
+        // 若文档类型改变，则触发编译更新
         $('input[name="text_type"]').change(
             function() {
                 compile_instant();
-            }
-        )
+        });
 
         // 即时编译模态框的文本
         function compile_instant(){
@@ -193,19 +203,34 @@
             $("#markdown_result").html(compile(text, text_type));
         }
 
-        // 删除按钮
+        // 删除按钮(此处直接提前拼接好请求函数和参数)
         function DeleteArticle(article_id){
             $.ajax({
-                async:false,
-                type: "post",
+                async: true,
+                type: "POST",
                 url: "{{ url_for('blog.del_article') }}",
                 data: {"id" : article_id},
                 success:function(result){               
                 }
             });
         }
-    </script>
 
+        // 置顶类型改变 则触发置顶请求（此处使用jquery获取状态改变对象并用正则提取id）
+        $("input[name='sticktime']").change(
+            function() { 
+                article_id = /\d+/g.exec($(this).attr("id"))[0];
+                checked_status = $(this).prop("checked");
+                $.ajax({
+                    async: true,
+                    type: "post",
+                    url: "{{ url_for('blog.stick_article') }}",
+                    data: {"id" : article_id, "stick_status": checked_status},
+                    success:function(result){               
+                        window.location.reload();
+                    }
+                });
+        });
+    </script>
 
     <!-- 圆形按钮样式（添加文章） -->
     <style>

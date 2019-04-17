@@ -39,6 +39,7 @@ def homepage():
     modules= [dict(name=record[0], url=record[1], params=record[2]) for record in records]
     return render_template('home.html', modules=modules)
 
+
 @home.route('/search', methods=('GET', 'POST'))
 def search():
     #get text
@@ -51,6 +52,7 @@ def search():
     url = params.get('url','bad_url') + params.get('params','bad_parms')
     return redirect(url)
 
+
 @home.route('/add_module', methods=('GET', 'POST'))
 def add_module():
     if not session.get('logged_in'):
@@ -61,7 +63,7 @@ def add_module():
     if name and url:
         sql = 'insert into modules (name, url, params) values (?, ?, ?)'
         params = [name, url, '']
-        insert(conn, sql, params)
+        execute(conn, sql, params)
 
         flash('New module has been added.')
     return redirect(url_for('home.homepage'))

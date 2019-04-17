@@ -10,18 +10,20 @@ import os
 from flask import Flask
 import json
 
-def create_app():
-    app = Flask(__name__)
+app = Flask(__name__)
+
+@app.route('/')
+def hello():
+    return 'heihei...'
+
+
+def app_init():
     app.config['SECRET_KEY'] = 'dev_rainwind'
 
-    @app.route('/')
-    def hello():
-        return 'heihei...'
-
-    return app
 
 if __name__ == '__main__':
     debug = False
     host = '0.0.0.0'
     port = 8001 if len(sys.argv) < 2 else sys.argv[1]
-    create_app().run(debug=debug, port=port, host=host)
+    app_init()
+    app.run(debug=debug, port=port, host=host)

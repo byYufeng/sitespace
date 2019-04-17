@@ -19,7 +19,7 @@ blog = Blueprint('blog', __name__)
 @blog.route('/show')
 def show_articles():
     fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime', 'visiable', 'sticktime']
-    page_size = 10
+    page_size = 20
 
     user = session.get('logged_in', 'Anonym') 
     conn = get_conn()

@@ -26,7 +26,7 @@ def show_articles():
     sql = 'select %s from articles where visiable=1 or (visiable=0 and author="%s") ' % (','.join(fields), user)
     #sql += 'order by id desc'
     sql += 'order by sticktime desc, id desc'
-    sql += ' limit %s' % page_size
+    #sql += ' limit %s' % page_size
     res = select(conn, sql)
     records = [result for result in res]
     articles = [dict(zip(fields, record)) for record in records]

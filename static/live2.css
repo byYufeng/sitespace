@@ -1,0 +1,24 @@
+table thead tr th, table tfoot tr th, table tfoot tr td, table tbody tr th, table tbody tr td, table tr td {
+    display: table-cell;
+    line-height: 1.125rem;
+}
+
+table tr th, table tr td {
+    color: #222;
+    font-size: 0.875rem;
+    padding: 0.5625rem 0.625rem;
+    text-align: left;
+}
+
+td, th {
+    display: table-cell;
+    vertical-align: inherit;
+}
+
+table {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 2px;
+    border-color: grey;
+}
+

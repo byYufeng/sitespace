@@ -72,9 +72,10 @@ ___
 >>老子最最屌
 
 
-<!-- 6.超链接 -->
+<!-- 6.超链接、贴图 -->
 [百度](https://www.baidu.com)
 ![百度](https://www.baidu.com/img/baidu_jgylogo3.gif)
+![百度](https://www.baidu.com/img/baidu_jgylogo3.gif 640x480)
 
 
 <!-- 7.表格 -->

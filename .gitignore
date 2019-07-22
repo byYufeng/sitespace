@@ -8,3 +8,6 @@ static/temp
 
 !*.gitignore
 !*.gitkeep
+
+index.py
+templates/base.html

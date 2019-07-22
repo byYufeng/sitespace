@@ -20,7 +20,7 @@ with open('static/markdown_template') as fin: markdown_template = fin.read()
 @blog.route('/show/page/<int:page>')
 def show_articles(page=1):
     user = session.get('logged_in', 'Anonym') 
-    page_size = 2
+    page_size = 5
     page_range = 5
 
     fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime', 'visiable', 'sticktime']

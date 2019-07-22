@@ -54,9 +54,8 @@ app.config['SECRET_KEY'] = 'dev_rainwind'
 
 def main():
     debug = True
-    debug = False
     host = '0.0.0.0'
-    port = 6080 if len(sys.argv) < 2 else int(sys.argv[1])
+    port = 6081 if len(sys.argv) < 2 else int(sys.argv[1])
     app.run(debug=debug, port=port, host=host)
 
 

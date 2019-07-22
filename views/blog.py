@@ -12,21 +12,72 @@ from utils.db.db_sqlite import *
 from utils.common import trans_data_to_str
 
 blog = Blueprint('blog', __name__)
+# 读取markdown tutorial作为placeholder
+with open('static/markdown_template') as fin: markdown_template = fin.read()
 
 
-#首页展示 
-#只能查看所有人可见和登陆者自己可见的
 @blog.route('/show')
-def show_articles():
+@blog.route('/show/page/<int:page>')
+def show_articles(page=1):
+    user = session.get('logged_in', 'Anonym') 
+    page_size = 2
+    page_range = 5
+
     fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime', 'visiable', 'sticktime']
-    page_size = 20
+    conn = get_conn()
+    start_offset = (page - 1 ) * page_size
+    count_sql = 'select count(*) from articles where visiable=1 or (visiable=0 and author="%s")' % user
+    total_count = list(select(conn, count_sql))[0][0]
+    total_page = 1 + (total_count - 1) / page_size
+    def cal_page(current_page, page_range, total_page):
+        # 当page_size是双数时还存在问题
+        start_page = current_page - page_range/2
+        end_page = current_page + page_range/2
+        if start_page <= 0:
+            end_page = end_page + (-start_page) + 1
+            start_page = 1
+        if end_page > total_page:
+            end_page = total_page
+        return [x for x in range(start_page, end_page + 1)]
+    pages = cal_page(page, page_range, total_page)
+
+    sql = 'select %s from articles where visiable=1 or (visiable=0 and author="%s")' % (','.join(fields), user)
+    sql += ' order by sticktime desc, id desc'
+    sql += ' limit %s, %s' % (start_offset, page_size)
+    res = select(conn, sql)
+    records = [result for result in res]
+    articles = [dict(zip(fields, record)) for record in records]
+
+    # 做枚举值的映射:visiable/sticktime
+    for article in articles:
+        if article['visiable'] == 1:
+            article['visiable'] = '所有人可见'
+        if article['visiable'] == 0:
+            article['visiable'] = '仅自己可见'
+
+    print 'user:%s' % user, [[x['id'], x['title']] for x in articles]
+
+    html_params = {
+            "articles": articles,
+            "markdown_template": markdown_template,
+            "current_page": page,
+            "total_page": total_page,
+            "pages": pages,
+    }
+
+    return render_template('blog.html', html_params=html_params)
+
+
+# 首页展示(all articles)
+# 只能查看所有人可见和登陆者自己可见的
+@blog.route('/show/all')
+def show_articles_all():
+    fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime', 'visiable', 'sticktime']
 
     user = session.get('logged_in', 'Anonym') 
     conn = get_conn()
     sql = 'select %s from articles where visiable=1 or (visiable=0 and author="%s") ' % (','.join(fields), user)
-    #sql += 'order by id desc'
     sql += 'order by sticktime desc, id desc'
-    #sql += ' limit %s' % page_size
     res = select(conn, sql)
     records = [result for result in res]
     articles = [dict(zip(fields, record)) for record in records]
@@ -42,10 +93,12 @@ def show_articles():
     for a in articles[:3]:
         print a
 
-    # 读取markdown tutorial作为placeholder
-    with open('static/markdown_template') as fin:
-        markdown_template = fin.read()
-    return render_template('blog.html', articles=articles, markdown_template=markdown_template)
+    html_params = {
+            "articles": articles,
+            "markdown_template": markdown_template
+    }
+
+    return render_template('blog.html', html_params=html_params)
 
 
 #检查登录状态并添加/修改文章 

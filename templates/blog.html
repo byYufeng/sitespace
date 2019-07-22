@@ -4,7 +4,7 @@
     <!-- 主体展示 -->
     <div id="show_articles">
     <!-- 遍历每一篇 -->
-    {% for article in articles %}
+    {% for article in html_params.articles %}
         <div>
             <!-- 标题 -->
             <h2><a href="#" id="article_{{ article.id }}_title">{{ article.title }}</a></h2>
@@ -92,7 +92,7 @@
                         <div class="row form-group">
                             <input name="id" id="article_id" type="hidden" class="form-control" />
                             <!-- 正文 -->
-                            <textarea name="text" id="article_text" class="col-xs-4 col-xs-offset-1" style="resize:None;height:0px;padding-bottom:45%" onkeyup="compile_instant()" placeholder="{{ markdown_template }}"></textarea>
+                            <textarea name="text" id="article_text" class="col-xs-4 col-xs-offset-1" style="resize:None;height:0px;padding-bottom:45%" onkeyup="compile_instant()" placeholder="{{ html_params.markdown_template }}"></textarea>
                             <div class="col-xs-2" > <!-- 此处如何实现垂直居中？-->
                                 <!-- 文档类型 -->
                                 <div class="radio text-center">
@@ -130,20 +130,24 @@
         </div><!-- /.modal -->
     </div>
 
+    <!-- 分页条 -->
     <nav aria-label="Page navigation">
-      <ul class="pagination">
+      <ul class="pagination pagination-lg">
         <li>
-          <a href="#" aria-label="Previous">
+            <a href="{{ url_for('blog.show_articles', page=1) }}" aria-label="Previous">
             <span aria-hidden="true">&laquo;</span>
           </a>
         </li>
-        <li><a href="#">1</a></li>
-        <li><a href="#">2</a></li>
-        <li><a href="#">3</a></li>
-        <li><a href="#">4</a></li>
-        <li><a href="#">5</a></li>
+        {% for page in html_params.pages %}
+            {% if page == html_params.current_page %}
+                <li class="active"><span href="{{ url_for('blog.show_articles', page=page) }}">{{ page }}</span></li>
+            {% else %}
+                <li><a href="{{ url_for('blog.show_articles', page=page) }}">{{ page }}</a></li>
+            {% endif %}
+        {% endfor %}
+        <li class="disabled"><span href="#">...</span></li>
         <li>
-          <a href="#" aria-label="Next">
+        <a href="{{ url_for('blog.show_articles', page=html_params.total_page) }}" aria-label="Next">
             <span aria-hidden="true">&raquo;</span>
           </a>
         </li>
@@ -192,7 +196,7 @@
             }
         }
 
-        {% for article in articles %}
+        {% for article in html_params.articles %}
             compile_onload({{ article.id }});
             init_onload({{ article.id }})
         {% endfor %}

@@ -89,13 +89,14 @@ def show_articles_all():
         if article['visiable'] == 0:
             article['visiable'] = '仅自己可见'
 
-    print 'user:%s' % user
-    for a in articles[:3]:
-        print a
+    print 'user:%s' % user, [[x['id'], x['title']] for x in articles]
 
     html_params = {
             "articles": articles,
-            "markdown_template": markdown_template
+            "markdown_template": markdown_template,
+            "current_page": 1,
+            "total_page": 1,
+            "pages": [1],
     }
 
     return render_template('blog.html', html_params=html_params)

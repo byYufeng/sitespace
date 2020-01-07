@@ -6,7 +6,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
-import os, time
+import os, time, json
 from flask import Blueprint, render_template, session, request, flash, redirect, url_for
 from utils.db.db_sqlite import *
 from utils.common import trans_data_to_str
@@ -16,6 +16,7 @@ blog = Blueprint('blog', __name__)
 with open('static/markdown_template') as fin: markdown_template = fin.read()
 
 
+# 分页显示
 @blog.route('/show')
 @blog.route('/show/page/<int:page>')
 def show_articles(page=1):
@@ -68,7 +69,41 @@ def show_articles(page=1):
     return render_template('blog.html', html_params=html_params)
 
 
-# 首页展示(all articles)
+# 显示单篇
+@blog.route('/show/<int:id>')
+def show_article(id=1):
+    user = session.get('logged_in', 'Anonym') 
+
+    fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime', 'visiable', 'sticktime']
+    conn = get_conn()
+
+    sql = 'select %s from articles where (visiable=1 or (visiable=0 and author="%s"))' % (','.join(fields), user)
+    sql += ' and id=%s' % (id)
+    res = select(conn, sql)
+    records = [result for result in res]
+    articles = [dict(zip(fields, record)) for record in records]
+
+    # 做枚举值的映射:visiable/sticktime
+    for article in articles:
+        if article['visiable'] == 1:
+            article['visiable'] = '所有人可见'
+        if article['visiable'] == 0:
+            article['visiable'] = '仅自己可见'
+
+    print 'user:%s' % user, [[x['id'], x['title']] for x in articles]
+
+    html_params = {
+            "articles": articles,
+            "markdown_template": markdown_template,
+            "current_page": 1,
+            "total_page": 1,
+            "pages": [1],
+    }
+
+    return render_template('blog.html', html_params=html_params)
+
+
+# 所有展示(all articles)
 # 只能查看所有人可见和登陆者自己可见的
 @blog.route('/show/all')
 def show_articles_all():
@@ -102,11 +137,54 @@ def show_articles_all():
     return render_template('blog.html', html_params=html_params)
 
 
+# 自动补全搜索文章(先检查登陆状态 只有本人和root用户可以置顶)
+@blog.route('/search', methods=['GET', 'POST'])
+def search_article():
+    search_limit = 10
+    user = session.get('logged_in', 'Anonym') 
+    request_data = request.args
+    # 似乎request.values可以同时获取get和post的数据?
+
+    if request_data:
+        #fields = ['id', 'title']
+        fields = ['id', 'title', 'text', 'author']
+        conn = get_conn()
+        sql = 'select {fields} from articles where title like "%{keyword}%" or text like "%{keyword}%" or author like "%{keyword}%"'.format(fields=','.join(fields), keyword=request_data.get('search_word'))
+        sql += ' and visiable=1 or (visiable=0 and author="{user}")'.format(user=user)
+        sql += ' order by sticktime desc, id desc'
+        sql += ' limit {limit}'.format(limit=search_limit)
+        print sql
+        res = select(conn, sql)
+        records = [result for result in res]
+        articles = [dict(zip(fields, record)) for record in records]
+        print 'user:%s' % user, [[x['id'], x['title']] for x in articles]
+
+        # 处理成 [id:1 title:2]形式的数组供自动提示
+        #return [reduce(lambda x: x += '%s:%s ' % (k, article.get(k).replace(' ','').replace('\n', '')]) for article in articles]
+        autocomplete_fields = ['title', 'text']
+        def lambdax(article):
+            '''
+            s = ""
+            for k in autocomplete_fields:
+                s += '%s ' % (str(article.get(k))[:-1].replace('\n', '').replace('\r', '')[:10])
+                print s
+            '''
+            s = '%s %s' % (str(article.get('title')), str(article.get('text')).replace('\n', ' ').replace('\r', ' ').decode()[:12].encode())
+            return s
+        autocomplete_list = [lambdax(article) for article in articles]
+        res = json.dumps(autocomplete_list, ensure_ascii=False)
+        print res
+    else:
+        res = '[]'
+    return res
+
+
 #检查登录状态并添加/修改文章 
 @blog.route('/add', methods=['POST'])
 def add_article():
-    #(未登录默认为匿名用户，可以发文，但固定为所有人可见，并且发布后不能编辑和删除)
     fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime', 'visiable']
+
+    #(未登录默认为匿名用户，可以发文，但固定为所有人可见，并且发布后不能编辑和删除)
     user = session.get('logged_in', 'Anonym') 
     if user == 'Anonym':
         pass
@@ -152,7 +230,8 @@ def add_article():
         else:
             flash('Edit failed!You must have the right', 'error')
 
-    return redirect(url_for('blog.show_articles'))
+    #return redirect(url_for('blog.show_articles'))
+    return redirect(request.referrer)
 
 
 # 删除文章(先检查登陆状态 只有本人和root用户可以删)
@@ -182,7 +261,8 @@ def del_article():
     else:
         flash('Delete failed!You must have the right!', 'error')
             
-    return redirect(url_for('blog.show_articles'))
+    #return redirect(url_for('blog.show_articles'))
+    return redirect(request.referrer)
 
 
 # 置顶文章(先检查登陆状态 只有本人和root用户可以置顶)
@@ -217,4 +297,5 @@ def stick_article():
     else:
         flash('Stick article failed!You must have the right!', 'error')
             
-    return redirect(url_for('blog.show_articles'))
+    #return redirect(url_for('blog.show_articles'))
+    return redirect(request.referrer)

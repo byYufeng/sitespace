@@ -1,8 +1,13 @@
 {% extends "base.html" %}
 
 {% block container%}
+    <div id="container_left" class="col-xs-3">
+        广告位招租
+    </div>
+
     <!-- 主体展示 -->
-    <div id="show_articles">
+    <div id="container_center" class="col-xs-6">
+
     <!-- 遍历每一篇 -->
     {% for article in html_params.articles %}
         <div>
@@ -66,6 +71,38 @@
     {% else %}
         <em>This guy is so lazy...</em>
     {% endfor %}
+
+        <!-- 分页条 -->
+        <nav aria-label="Page navigation">
+          <ul class="pagination pagination-lg">
+            <li>
+                <a href="{{ url_for('blog.show_articles', page=1) }}" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            {% for page in html_params.pages %}
+                {% if page == html_params.current_page %}
+                    <li class="active"><span href="{{ url_for('blog.show_articles', page=page) }}">{{ page }}</span></li>
+                {% else %}
+                    <li><a href="{{ url_for('blog.show_articles', page=page) }}">{{ page }}</a></li>
+                {% endif %}
+            {% endfor %}
+            <li class="disabled"><span href="#">...</span></li>
+            <li>
+            <a href="{{ url_for('blog.show_articles', page=html_params.total_page) }}" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+    </div>
+
+    <div id="container_right" class="col-xs-3">
+        <a href="https://lol.qq.com/act/a20190702loltftwf/index.html#tab1">官方资料站</a><br/>
+        <a href="https://game.gtimg.cn/images/lol/act/a20190702loltftwf/zb-box.png">装备合成表</a><br/>
+        <a href="https://ol.3dmgame.com/lol/zizouqi/simulator/">阵容模拟器</a><br/>
+        <a href="">d</a><br/>
     </div>
 
     <!-- 添加返回顶部按钮 -->
@@ -134,38 +171,43 @@
         </div><!-- /.modal -->
     </div>
 
-    <!-- 分页条 -->
-    <nav aria-label="Page navigation">
-      <ul class="pagination pagination-lg">
-        <li>
-            <a href="{{ url_for('blog.show_articles', page=1) }}" aria-label="Previous">
-            <span aria-hidden="true">&laquo;</span>
-          </a>
-        </li>
-        {% for page in html_params.pages %}
-            {% if page == html_params.current_page %}
-                <li class="active"><span href="{{ url_for('blog.show_articles', page=page) }}">{{ page }}</span></li>
-            {% else %}
-                <li><a href="{{ url_for('blog.show_articles', page=page) }}">{{ page }}</a></li>
-            {% endif %}
-        {% endfor %}
-        <li class="disabled"><span href="#">...</span></li>
-        <li>
-        <a href="{{ url_for('blog.show_articles', page=html_params.total_page) }}" aria-label="Next">
-            <span aria-hidden="true">&raquo;</span>
-          </a>
-        </li>
-      </ul>
-    </nav>
 
 
-    <!-- 以下为sript和css-->
+    <!-- 以下为srcipt和css-->
 
     <!-- markdown插件和table扩展插件 -->
     <!-- <script src="/static/showdown-toc.js"></script> -->
     <script src="/static/showdown.js"></script>
+
     <script>
-        // **md编译相关函数**
+        // 自动补全
+        autocomplete_url = '/blog/search';
+        search_input_id = 'search_word';
+        $("#"+search_input_id).keyup(function(){  
+            var skeyword = $("#"+search_input_id).val();
+            $.ajax({
+                url: autocomplete_url,
+                type: "GET",
+                data: {"search_word": skeyword},
+                success: function (data) {
+                    insertOptions(data);
+                }
+            });
+        });  
+
+        var insertOptions = function(data) {  
+            var result = new Array();  
+            $.each(JSON.parse(data), function(i, item){  
+                result.push(item);  
+            });  
+            $("#search_word").autocomplete({  
+                source: result 
+
+            });  
+        };
+    </script>
+    <script>
+        // **markdown编译**
         // 将文档编译后展示 若为normal:将文本输入的\r\n换行符替换为html中的<br/> 若为markdown:转换成markdown结果
         // var converter = new showdown.Converter({extensions: ['table']}); // 
         var converter = new showdown.Converter({
@@ -186,7 +228,7 @@
         }
     </script>
     <script>
-        // **内容加载相关函数**
+        // **内容加载**
         function compile_onload(article_id){
             var text = $("#article_" + article_id + "_original_text").text();
             var text_type = $("#article_" + article_id + "_text_type").text();
@@ -206,7 +248,7 @@
         {% endfor %}
     </script>
     <script>
-        // **编辑框相关函数**
+        // **编辑框相关**
         // 编辑/新增按钮：给弹出的模态框传入原始内容
         function EditArticle(article_id){
             var title = $("#article_" + article_id + "_title").text();

@@ -36,7 +36,11 @@ app.logger.addHandler(handler)
 
 @app.after_request
 def log(response):
-    app.logger.info('client IP: %s' % request.remote_addr)
+    #app.logger.info('client IP: %s' % request.remote_addr)
+    # 添加请求路径，和返回结果
+    request_info = 'client IP: %s\tRequest args: %s\tRequest data: %s' % (request.remote_addr, request.args, request.get_data())
+    app.logger.info(request_info)
+
     return response
 
 @app.route('/favicon.ico')
@@ -53,9 +57,9 @@ app.config['SECRET_KEY'] = 'dev_rainwind'
 
 
 def main():
-    debug = False
+    debug = True
     host = '0.0.0.0'
-    port = 6080 if len(sys.argv) < 2 else int(sys.argv[1])
+    port = 6081 if len(sys.argv) < 2 else int(sys.argv[1])
     app.run(debug=debug, port=port, host=host)
 
 

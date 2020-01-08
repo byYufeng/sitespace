@@ -21,6 +21,16 @@
                     </span>
                 </span>
 
+                    <!-- 文档类型 -->
+                    <span>
+                        &nbsp;&nbsp;<span class="glyphicon glyphicon-list"></span>
+                        <label id="article_{{ article.id }}_text_type" hidden>{{ article.text_type }}</label>
+                    </span>
+                    <!-- 是否公开 -->
+                    <span>
+                        &nbsp;&nbsp;<span class="glyphicon glyphicon-eye-open"></span>
+                        <label id="article_{{ article.id }}_visiable" hidden>{{ article.visiable }}</label>
+                    </span>
                 <font size=3>
                     <span>
                         &nbsp;&nbsp;<span class="glyphicon glyphicon-edit"></span>
@@ -100,6 +110,26 @@
             <div>
                 <!-- 因为后面会渲染和转义 所以此处用隐藏标签保存原始文本 -->
                 <!-- 另：如果这里的p标签改为div 则会导致编辑时卡死 暂时没找到原因 -->
+                    <!-- 文档类型 -->
+                    <span>
+                        &nbsp;&nbsp;<span class="glyphicon glyphicon-list"></span>
+                        <label id="article_{{ article.id }}_text_type">{{ article.text_type }}</label>
+                    </span>
+                    <!-- 是否公开 -->
+                    <span>
+                        &nbsp;&nbsp;<span class="glyphicon glyphicon-eye-open"></span>
+                        <label id="article_{{ article.id }}_visiable">{{ article.visiable }}</label>
+                    </span>
+                    <!-- 文档类型 -->
+                    <span>
+                        &nbsp;&nbsp;<span class="glyphicon glyphicon-list"></span>
+                        <label id="article_{{ article.id }}_text_type">{{ article.text_type }}</label>
+                    </span>
+                    <!-- 是否公开 -->
+                    <span>
+                        &nbsp;&nbsp;<span class="glyphicon glyphicon-eye-open"></span>
+                        <label id="article_{{ article.id }}_visiable">{{ article.visiable }}</label>
+                    </span>
                 <p id="article_{{ article.id }}_original_text" hidden>{{ article.text | safe }}</p>
                 <div id="article_{{ article.id }}_text"></div>
                 <p><a href="#">查看全文</a></p> 

@@ -6,13 +6,16 @@ import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
 sys.path.append('libs')
+sys.path.append('../../riven/utils')
 
 import os
-from flask import Flask
+from flask import Flask,__version__
 from flask_bootstrap import Bootstrap
 from flask import request
 from flask import send_from_directory
 import logging
+from flask.logging import default_handler
+from common import *
 
 
 app = Flask(__name__)
@@ -28,27 +31,33 @@ app.register_blueprint(personal, url_prefix='/personal')
 app.register_blueprint(blog, url_prefix='/blog')
 
 #add logger
-handler = logging.FileHandler('data/site_access.log', encoding='UTF-8')
-logging_formatter = logging.Formatter(\
-        '%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - %(lineno)s - %(message)s')
-handler.setFormatter(logging_formatter)
-app.logger.addHandler(handler)
+logger = logging.getLogger()
+logging.getLogger('werkzeug').disabled = True
+
+log_formatter = '%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - %(lineno)s - %(message)s'
+logging_formatter = logging.Formatter(log_formatter)
+file_handler = logging.FileHandler('logs/site.log', encoding='UTF-8')
+file_handler.setFormatter(logging_formatter)
+logger.addHandler(file_handler)
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(logging_formatter)
+logger.addHandler(console_handler)
+
 
 @app.after_request
 def log(response):
-    #app.logger.info('client IP: %s' % request.remote_addr)
-    # 添加请求路径，和返回结果
-    request_info = 'client IP: %s\tRequest args: %s\tRequest data: %s' % (request.remote_addr, request.args, request.get_data())
+    #request_info = print_split((get_current_datetime(), request.remote_addr, request.method, request.path, request.values), '--')
+    request_info = print_split((request.remote_addr, request.method, request.path, request.values), ' - ')
     app.logger.info(request_info)
-
     return response
+
 
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-Bootstrap(app)
 
+Bootstrap(app)
 app.config['SECRET_KEY'] = 'dev_rainwind'
 
 #CsrfProtect(app)

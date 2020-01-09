@@ -57,7 +57,7 @@
 <!-- 搜索引擎 -->
 <div class="row">
     <div class="col-md-2 form-group">
-        <h3><b>搜索引擎</b></h3>
+        <h3><b>多重搜索</b></h3>
     </div>
 </div>
 
@@ -65,7 +65,7 @@
     <!-- 输入框 -->
     <div class="row">
         <div class="col-md-4 col-md-offset-1 form-group">
-            <input name="keyword" class="form-control" placeholder="text"></input>
+            <input id="keyword" class="form-control" placeholder="text"></input>
         </div>
     </div>
 
@@ -73,30 +73,27 @@
     <div class="row">
         <div class="col-md-4 col-md-offset-1 form-group">
             <div class="btn-group" data-toggle="buttons" >
-                <button class="btn btn-default active">All</button>
-                <button class="btn btn-default">百科</button>
-                <button class="btn btn-default">影视</button>
-                <button class="btn btn-default">翻译</button>
+                <!-- 一级选项暂无内容 固定 -->
+                <button class="btn btn-default search1 active">All</button>
+                <button class="btn btn-default search1" disabled>百科</button>
+                <button class="btn btn-default search1" disabled>影视</button>
+                <button class="btn btn-default search1" disabled>翻译</button>
             </div>
         </div>
     </div>
 
     <!-- 二级选项(搜索引擎) 可复选 -->
     <div class="row">
-        <div class="col-md-4 col-md-offset-1 form-group">
-            <div class="btn-group" data-toggle="buttons" >
-                <label class="btn btn-default active">
-                    <input type="checkbox" checked>Google</input>
-                </label>
-                <label class="btn btn-default">
-                    <input type="checkbox">Baidu</input>
-                </label>
-                <label class="btn btn-default">
-                    <input type="checkbox">知乎</input>
-                </label>
-                <label class="btn btn-default">
-                    <input type="checkbox">贴吧</input>
-                </label>
+        <div class="row col-md-4 col-md-offset-1 form-group">
+            <div class="btn-group" data-toggle="buttons-checkbox" id="search_box">
+                <button name="search_engine" class="btn btn-default search2" value="https://www.google.com/search?q=%s">Google</button>
+                <button name="search_engine" class="btn btn-default search2" value="https://cn.bing.com/search?q=%s">Bing</button>
+                <button name="search_engine" class="btn btn-default search2 active" value="https://www.zhihu.com/search?q=%s">知乎</button>
+                <button name="search_engine" class="btn btn-default search2 active" value="https://s.weibo.com/weibo?q=%s">微博</button>
+                <button name="search_engine" class="btn btn-default search2" value="https://baike.baidu.com/item/%s">百度百科</button>
+                <button name="search_engine" class="btn btn-default search2" value="https://search.douban.com/movie/subject_search?search_text=%s">豆瓣电影</button>
+                <button name="search_engine" class="btn btn-default search2" value="https://translate.google.cn/#view=home&op=translate&sl=auto&tl=en&text=%s">google翻译</button>
+                <button name="search_engine" class="btn btn-default search2" value="https://www.baidu.com/search?q=%s">Baidu</button> <!-- 刚调了一次就把IP封了 有毛病吧 老子才不想用你呢！ --!>
             </div>
         </div>
     </div>
@@ -104,11 +101,45 @@
     <!-- submit -->
     <div class="row">
         <div class="col-md-4 col-md-offset-1 form-group">
-            <button type="submit" class="btn btn-primary ">Search</button></td>
+            <label type="submit" class="btn btn-primary" onclick=search()>Search</label></td>
         </div>
     </div>
 
 </form>
+
+<script>
+// button预设active后会一直保持。需手动维护
+/*
+$(".search1").click(function(){
+    $(".search1").removeClass("active");
+    $(this).addClass("active");
+});
+*/
+
+/*
+//由于浏览器限制一次只能触发一个页面(其余以弹窗形式)，暂时由多选改为单选>
+$(".search2").click(function(){
+    $(".search2").removeClass("active");
+    $(this).addClass("active");
+});
+*/
+
+function search(){
+    search_keyword = $("#keyword").val();
+    $("[name='search_engine'].active").each(
+        function(i, e){
+            base_url = $(this).attr("value");
+            if(search_keyword == ""){
+                url = base_url.replace("search?q=%s", "");
+            }
+            else{
+                url = base_url.replace("%s", search_keyword);
+            }
+            window.open(url);
+        }
+    )
+}
+</script>
 
 <!-- 
 <div id="allmap"></div>

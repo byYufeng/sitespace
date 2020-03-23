@@ -10,11 +10,13 @@ import os, time, json
 from flask import Blueprint, render_template, session, request, flash, redirect, url_for
 from utils.db.db_sqlite import *
 from utils.common import trans_data_to_str
+import collections
 
 blog = Blueprint('blog', __name__)
 # 读取markdown tutorial作为placeholder
 with open('static/markdown_template') as fin: markdown_template = fin.read()
 
+fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime', 'visiable', 'sticktime', 'tags']
 
 # 分页显示
 @blog.route('/show')
@@ -23,9 +25,8 @@ def show_articles(page=1):
     user = session.get('logged_in', 'Anonym') 
     page_size = 10
     page_range = 5
-
-    fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime', 'visiable', 'sticktime']
     conn = get_conn()
+
     start_offset = (page - 1 ) * page_size
     count_sql = 'select count(*) from articles where visiable=1 or (visiable=0 and author="%s")' % user
     total_count = list(select(conn, count_sql))[0][0]
@@ -58,12 +59,17 @@ def show_articles(page=1):
 
     print 'user:%s' % user, [[x['id'], x['title']] for x in articles]
 
+    tags = reduce(lambda x,y:x+y, [x.split(',') for x in [x.get('tags') for x in articles]])
+    tags_cnt = collections.Counter(tags)
+    tags_list = sorted(tags_cnt.items(), key=lambda x:(x[1], x[0]), reverse=True)
+
     html_params = {
             "articles": articles,
             "markdown_template": markdown_template,
             "current_page": page,
             "total_page": total_page,
             "pages": pages,
+            "tags": tags_list,
     }
 
     return render_template('blog.html', html_params=html_params)
@@ -73,10 +79,7 @@ def show_articles(page=1):
 @blog.route('/show/id/<int:id>')
 def show_article(id=1):
     user = session.get('logged_in', 'Anonym') 
-
-    fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime', 'visiable', 'sticktime']
     conn = get_conn()
-
     sql = 'select %s from articles where (visiable=1 or (visiable=0 and author="%s"))' % (','.join(fields), user)
     sql += ' and id=%s' % (id)
     res = select(conn, sql)
@@ -107,8 +110,6 @@ def show_article(id=1):
 # 只能查看所有人可见和登陆者自己可见的
 @blog.route('/show/all')
 def show_articles_all():
-    fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime', 'visiable', 'sticktime']
-
     user = session.get('logged_in', 'Anonym') 
     conn = get_conn()
     sql = 'select %s from articles where visiable=1 or (visiable=0 and author="%s") ' % (','.join(fields), user)
@@ -126,12 +127,17 @@ def show_articles_all():
 
     print 'user:%s' % user, [[x['id'], x['title']] for x in articles]
 
+    tags = reduce(lambda x,y:x+y, [x.split(',') for x in [x.get('tags') for x in articles]])
+    tags_cnt = collections.Counter(tags)
+    tags_list = sorted(tags_cnt.items(), key=lambda x:(x[1], x[0]), reverse=True)
+
     html_params = {
             "articles": articles,
             "markdown_template": markdown_template,
             "current_page": 1,
             "total_page": 1,
             "pages": [1],
+            "tags": tags_list,
     }
 
     return render_template('blog.html', html_params=html_params)
@@ -182,7 +188,7 @@ def search_article():
 #检查登录状态并添加/修改文章 
 @blog.route('/add', methods=['POST'])
 def add_article():
-    fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime', 'visiable']
+    fields = ['id', 'title', 'text', 'author', 'text_type', 'publishtime', 'visiable', 'tag']
 
     #(未登录默认为匿名用户，可以发文，但固定为所有人可见，并且发布后不能编辑和删除)
     user = session.get('logged_in', 'Anonym') 
@@ -193,10 +199,12 @@ def add_article():
 
     #print request.form
     params = {k:request.form.get(k) for k in fields}
+    params['tags'] = ','.join(request.form.getlist('tag'));del params['tag']
     article_id = int(params.get('id'))
     params['id'] = article_id
     params['author'] = user
-    params['publishtime'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    edit_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    params['publishtime'] = edit_time
     params = {k: trans_data_to_str(params.get(k)) for k in params}
 
     # 做回一些枚举值的映射
@@ -205,9 +213,10 @@ def add_article():
     if params['visiable'] == '仅自己可见':
         params['visiable'] = 0
 
-    insert_fields = [k for k in params if k != 'id']
+    insert_fields = [k for k in params if k not in ['id']]
     update_fields = [k for k in params if k not in ['id', 'author', 'publishtime']]
 
+    print params
     #upsert
     conn = get_conn()
     res = select(conn, 'select * from articles where id=%s' % article_id)
@@ -222,7 +231,6 @@ def add_article():
     else: # update
         original_author = res[0][3]
         if user == original_author and user != 'Anonym':
-            sql = 'update articles set title=?, text=?, text_type=? where id = ?'
             sql = 'update articles set %s where id = %s' % (', '.join(['%s=?' % x for x in update_fields]), article_id)
             execute(conn, sql, [params[k] for k in update_fields])
 

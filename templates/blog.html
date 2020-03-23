@@ -55,12 +55,27 @@
     <!-- 主体展示 -->
     <div id="container_center" class="col-xs-6">
     
+    <div>
+        <h3>Tags:
+            {% for tag in html_params.tags %}
+                <label class="checkbox-inline"> 
+                    <input type="checkbox" id="tag_{{loop.index0}}" value="option_{{ loop.index0 }}" tag={{tag[0]}}>{{ tag[0]}}({{ tag[1] }})
+                </label>
+            {% endfor %}
+        </h3>
+    </div>
+
     {% for article in html_params.articles %}
         <!-- 遍历后端传来的所有文章 -->
         {% if article.id != 181 and article.id != 205 %}
-        <div>
+        <div id={{article.id}} tags={{article.tags}}>
             <!-- 标题 -->
-            <h2><a href="#article_{{ article.id }}" data-toggle="collapse">{{ article.title }}</a></h2>
+            <h2>
+                <a href="#article_{{ article.id }}" data-toggle="collapse">{{ article.title }}</a>
+                {% for tag in article.tags.split(',') %}
+                <font size="3"><span class="label label-default">{{ tag }}</span></font>
+                {% endfor %}
+            </h2>
 
             <!-- 正文 -->
             <div id="article_{{ article.id }}" class="collapse in">
@@ -188,7 +203,7 @@
                     <!-- 标题 -->
                     <div class="modal-header">
                         <h4 class="modal-title form-group" id="myModalLabel">
-                            <input name="title" id="article_title" class="form-control text-center" placeholder="Title" required="" autofocus="" />
+                            <input name="title" id="article_title" class="form-control text-center" placeholder="请注册登录，否则匿名发表的文章无法删改" required="" autofocus="" />
                         </h4>
                     </div>
 
@@ -211,7 +226,7 @@
                                         &nbsp;&nbsp;
                                     </label></div>
                                 </div>
-                                <!-- 是否公开(仅自己可见) -->
+                                <!-- 公开/仅自己可见 -->
                                 <div class="radio text-center">
                                     <hr/>
                                     <div><label>
@@ -221,6 +236,16 @@
                                     <div><label>
                                         <input type="radio" name="visiable" id="visiableType2" value="仅自己可见" >仅自己可见
                                     </label></div>
+                                </div>
+                                <!-- tag -->
+                                <div class="radio text-center">
+                                    <hr/>
+                                    {% for tag in html_params.tags %}
+                                    <div><label>
+                                        <input type="checkbox" name="tag" id="tag_{{loop.index0}}" value={{tag[0]}}>{{tag[0]}}
+                                    </label></div>
+                                    <br/>
+                                    {% endfor %}
                                 </div>
                             </div>
                             <!-- 编译的镜像 -->
@@ -243,6 +268,29 @@
     <!-- markdown插件和table扩展插件 -->
     <!-- <script src="/static/showdown-toc.js"></script> -->
     <script src="/static/showdown.js"></script>
+
+    <script type="text/javascript">
+        // tag筛选
+        $(document).ready(function(){
+            $("[tag]").click(function(){
+                $("[tags]").hide();
+                noselected = true;
+                $("[tag]").each(function(){
+                    tag = $(this).attr("tag");
+                    checked = $(this).is(":checked");
+                    if(checked){
+                        $("[tags*='"+tag+"']").show();
+                        noselected = false;
+                    }
+                })
+                if(noselected){
+                    $("[tags]").show();
+                }
+                //$("[tags*='"+tag+"']").toggle();
+                //$("[tags]").not($("[tags*='"+tag+"'])")).hide();
+            });
+        });
+    </script>
 
     <script>
         // 自动补全
@@ -325,6 +373,10 @@
             $("#article_text").text(text);
             $("input[name='text_type'][value="+text_type+"]").attr("checked", true);
             $("input[name='visiable'][value="+visiable+"]").attr("checked", true);
+            var tags = $("div[id="+article_id+"]").attr("tags");
+            tags.split(",").forEach(function(tag){
+                $("input[name='tag'][value="+tag+"]").attr("checked", true);
+            });
             compile_instant();
         }
 

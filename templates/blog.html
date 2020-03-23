@@ -5,7 +5,7 @@
     <!-- 代码完全同中间正文 but delete top & delete -->
 
     {% for article in html_params.articles %}
-        {% if article.id == 181 %}
+        {% if article.id == 181 or article.id == 205 %}
         <!-- 遍历后端传来的所有文章 -->
         <div>
             <!-- 标题 -->
@@ -54,66 +54,100 @@
 
     <!-- 主体展示 -->
     <div id="container_center" class="col-xs-6">
+    
+    <div>
+        <h3>Tags:
+            {% for tag in html_params.tags %}
+                <label class="checkbox-inline"> 
+                    <input type="checkbox" id="tag_{{loop.index0}}" value="option_{{ loop.index0 }}" tag={{tag[0]}}>{{ tag[0]}}({{ tag[1] }})
+                </label>
+            {% endfor %}
+        </h3>
+    </div>
+
     {% for article in html_params.articles %}
         <!-- 遍历后端传来的所有文章 -->
-        {% if article.id != 181 %}
-        <div>
+        {% if article.id != 181 and article.id != 205 %}
+        <div id={{article.id}} tags={{article.tags}}>
             <!-- 标题 -->
-            <h2><a href="{{ url_for('blog.show_article', id=article.id) }}" id="article_{{ article.id }}_title">{{ article.title }}</a></h2>
-
-            <!-- 信息栏 -->
-            <p class="lead">
-                <span>
-                    <!-- 作者 -->
-                    <span class="glyphicon glyphicon-user"></span>
-                    <span id="article_{{ article.id }}_author">
-                        {{ article.author }}
-                    </span>
-                </span>
-
-                <font size=3>
-                    <!-- 发布时间 -->
-                    <span>
-                        &nbsp;&nbsp;<span class="glyphicon glyphicon-time"></span>
-                        {{ article.publishtime }}
-                    </span>
-                    <!-- 文档类型 -->
-                    <span>
-                        &nbsp;&nbsp;<span class="glyphicon glyphicon-list"></span>
-                        <label id="article_{{ article.id }}_text_type">{{ article.text_type }}</label>
-                    </span>
-                    <!-- 是否公开 -->
-                    <span>
-                        &nbsp;&nbsp;<span class="glyphicon glyphicon-eye-open"></span>
-                        <label id="article_{{ article.id }}_visiable">{{ article.visiable }}</label>
-                    </span>
-                    <br/>
-                    <!-- 置顶、编辑、删除 -->
-                    <span>
-                        &nbsp;&nbsp;<span class="glyphicon glyphicon-circle-arrow-up"></span>
-                        置顶
-                        <input type="checkbox" name="sticktime" id="article_{{ article.id }}_sticktime" value="{{ article.sticktime }}"/>
-                    </span>
-                    <span>
-                        &nbsp;&nbsp;<span class="glyphicon glyphicon-edit"></span>
-                        <a href="#" data-toggle="modal" data-target="#edit" onClick="EditArticle({{ article.id }})">编辑</a>
-                    </span>
-                    <span>
-                        <!-- &nbsp;&nbsp;<a href="#" onClick="DeleteArticle({{ article.id }})">删除</a> -->
-                        &nbsp;&nbsp;<span class="glyphicon glyphicon-trash"></span>
-                        <a href="{{ url_for('blog.del_article') }}?id={{ article.id }}">删除</a>
-                    </span>
-                </font>
-            </p>
+            <h2>
+                <a href="#article_{{ article.id }}" data-toggle="collapse">{{ article.title }}</a>
+                {% for tag in article.tags.split(',') %}
+                <font size="3"><span class="label label-default">{{ tag }}</span></font>
+                {% endfor %}
+            </h2>
 
             <!-- 正文 -->
-            <div>
-                <!-- 因为后面会渲染和转义 所以此处用隐藏标签保存原始文本 -->
-                <!-- 另：如果这里的p标签改为div 则会导致编辑时卡死 暂时没找到原因 -->
-                <p id="article_{{ article.id }}_original_text" hidden>{{ article.text | safe }}</p>
-                <div id="article_{{ article.id }}_text"></div>
-                <p><a href="#">查看全文</a></p> 
-            </div>
+            <div id="article_{{ article.id }}" class="collapse in">
+
+                <!-- 信息栏 -->
+                <p class="lead">
+                    <span>
+                        <!-- 作者 -->
+                        <span class="glyphicon glyphicon-user"></span>
+                        <span id="article_{{ article.id }}_author">
+                            {{ article.author }}
+                        </span>
+                    </span>
+
+                    <font size=3>
+                        <!-- 发布时间 -->
+                        <span>
+                            &nbsp;&nbsp;<span class="glyphicon glyphicon-time"></span>
+                            Publish:{{ article.publishtime }}
+                        </span>
+
+                        <!-- 最后修改时间 -->
+                        <span>
+                            &nbsp;&nbsp;<span class="glyphicon glyphicon-time"></span>
+                            Last Modify:{{ article.publishtime }}
+                        </span>
+
+                        <!-- 版本 -->
+                        <span>
+                            &nbsp;&nbsp;<span class="glyphicon glyphicon-time"></span>
+                            v1.0
+                        </span>
+
+                        <br/>
+
+                        <!-- 文档类型 -->
+                        <span>
+                            &nbsp;&nbsp;<span class="glyphicon glyphicon-list"></span>
+                            <label id="article_{{ article.id }}_text_type">{{ article.text_type }}</label>
+                        </span>
+                        <!-- 是否公开 -->
+                        <span>
+                            &nbsp;&nbsp;<span class="glyphicon glyphicon-eye-open"></span>
+                            <label id="article_{{ article.id }}_visiable">{{ article.visiable }}</label>
+                        </span>
+                        <!-- 置顶、编辑、删除 -->
+                        <span>
+                            &nbsp;&nbsp;<span class="glyphicon glyphicon-circle-arrow-up"></span>
+                            置顶
+                            <input type="checkbox" name="sticktime" id="article_{{ article.id }}_sticktime" value="{{ article.sticktime }}"/>
+                        </span>
+                        <span>
+                            &nbsp;&nbsp;<span class="glyphicon glyphicon-edit"></span>
+                            <a href="#" data-toggle="modal" data-target="#edit" onClick="EditArticle({{ article.id }})">编辑</a>
+                        </span>
+                        <span>
+                            <!-- &nbsp;&nbsp;<a href="#" onClick="DeleteArticle({{ article.id }})">删除</a> -->
+                            &nbsp;&nbsp;<span class="glyphicon glyphicon-trash"></span>
+                            <a href="{{ url_for('blog.del_article') }}?id={{ article.id }}">删除</a>
+                        </span>
+                    </font>
+                </p>
+
+                <!-- 正文 -->
+                <div>
+                    <!-- 因为后面会渲染和转义 所以此处用隐藏标签保存原始文本 -->
+                    <!-- 另：如果这里的p标签改为div 则会导致编辑时卡死 暂时没找到原因 -->
+                    <p id="article_{{ article.id }}_original_text" hidden>{{ article.text | safe }}</p>
+                    <div id="article_{{ article.id }}_text"></div>
+                    <p><a href="{{ url_for('blog.show_article', id=article.id) }}" id="article_{{ article.id }}_title">查看全文</a></p>
+                </div>
+            </div> 
             <hr>
         </div/>
         {% endif %}
@@ -169,7 +203,7 @@
                     <!-- 标题 -->
                     <div class="modal-header">
                         <h4 class="modal-title form-group" id="myModalLabel">
-                            <input name="title" id="article_title" class="form-control text-center" placeholder="Title" required="" autofocus="" />
+                            <input name="title" id="article_title" class="form-control text-center" placeholder="请注册登录，否则匿名发表的文章无法删改" required="" autofocus="" />
                         </h4>
                     </div>
 
@@ -192,7 +226,7 @@
                                         &nbsp;&nbsp;
                                     </label></div>
                                 </div>
-                                <!-- 是否公开(仅自己可见) -->
+                                <!-- 公开/仅自己可见 -->
                                 <div class="radio text-center">
                                     <hr/>
                                     <div><label>
@@ -202,6 +236,16 @@
                                     <div><label>
                                         <input type="radio" name="visiable" id="visiableType2" value="仅自己可见" >仅自己可见
                                     </label></div>
+                                </div>
+                                <!-- tag -->
+                                <div class="radio text-center">
+                                    <hr/>
+                                    {% for tag in html_params.tags %}
+                                    <div><label>
+                                        <input type="checkbox" name="tag" id="tag_{{loop.index0}}" value={{tag[0]}}>{{tag[0]}}
+                                    </label></div>
+                                    <br/>
+                                    {% endfor %}
                                 </div>
                             </div>
                             <!-- 编译的镜像 -->
@@ -224,6 +268,29 @@
     <!-- markdown插件和table扩展插件 -->
     <!-- <script src="/static/showdown-toc.js"></script> -->
     <script src="/static/showdown.js"></script>
+
+    <script type="text/javascript">
+        // tag筛选
+        $(document).ready(function(){
+            $("[tag]").click(function(){
+                $("[tags]").hide();
+                noselected = true;
+                $("[tag]").each(function(){
+                    tag = $(this).attr("tag");
+                    checked = $(this).is(":checked");
+                    if(checked){
+                        $("[tags*='"+tag+"']").show();
+                        noselected = false;
+                    }
+                })
+                if(noselected){
+                    $("[tags]").show();
+                }
+                //$("[tags*='"+tag+"']").toggle();
+                //$("[tags]").not($("[tags*='"+tag+"'])")).hide();
+            });
+        });
+    </script>
 
     <script>
         // 自动补全
@@ -306,6 +373,10 @@
             $("#article_text").text(text);
             $("input[name='text_type'][value="+text_type+"]").attr("checked", true);
             $("input[name='visiable'][value="+visiable+"]").attr("checked", true);
+            var tags = $("div[id="+article_id+"]").attr("tags");
+            tags.split(",").forEach(function(tag){
+                $("input[name='tag'][value="+tag+"]").attr("checked", true);
+            });
             compile_instant();
         }
 

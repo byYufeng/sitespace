@@ -61,7 +61,7 @@ def show_articles(page=1):
 
     tags = reduce(lambda x,y:x+y, [x.split(',') for x in [x.get('tags') for x in articles]])
     tags_cnt = collections.Counter(tags)
-    tags_list = sorted(tags_cnt.items(), key=lambda x:(x[1], x[0]), reverse=True)
+    tags_list = sorted(tags_cnt.items(), key=lambda x:(-x[1], x[0]))
 
     html_params = {
             "articles": articles,
@@ -129,7 +129,7 @@ def show_articles_all():
 
     tags = reduce(lambda x,y:x+y, [x.split(',') for x in [x.get('tags') for x in articles]])
     tags_cnt = collections.Counter(tags)
-    tags_list = sorted(tags_cnt.items(), key=lambda x:(x[1], x[0]), reverse=True)
+    tags_list = sorted(tags_cnt.items(), key=lambda x:(-x[1], x[0]))
 
     html_params = {
             "articles": articles,
@@ -198,8 +198,10 @@ def add_article():
         #return redirect(url_for('blog.show_articles'))
 
     #print request.form
+
     params = {k:request.form.get(k) for k in fields}
-    params['tags'] = ','.join(request.form.getlist('tag'));del params['tag']
+    #params['tags'] = ','.join(request.form.getlist('tag'));del params['tag']
+    params['tags'] = params['tag'];del params['tag']
     article_id = int(params.get('id'))
     params['id'] = article_id
     params['author'] = user

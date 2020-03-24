@@ -1,0 +1,15 @@
+202020323
+1.数据库添加tag字段
+2.顶部根据拿到的所有article列出所有tag
+3.每个article后面跟上对应tag
+4.checkbox选取tag：当勾选后，将不包含的都hide掉。取消勾选后则show。
+5.edit框增加tag
+
+
+202020324
+[x]修复编辑时title异常的bug
+[x]将增删时的tag由checkbox改为input(更易新添)
+[x]修复筛选多选bug：只显示包含所有勾选的tag的article
+[xx]附加统计筛选后显示的条目
+[x]增加一键折叠按钮
+修复最右栏错位

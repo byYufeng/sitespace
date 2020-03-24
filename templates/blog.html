@@ -2,7 +2,7 @@
 
 {% block container%}
     <div id="container_left" class="col-xs-3">
-    <!-- 代码完全同中间正文 but delete top & delete -->
+    <!-- top & delete标签，其他完全同正文 -->
 
     {% for article in html_params.articles %}
         {% if article.id == 181 or article.id == 205 %}
@@ -50,28 +50,35 @@
         </div/>
         {% endif %}
     {% endfor %}
-    </div>
+    </div> <!-- end container_left -->
 
     <!-- 主体展示 -->
     <div id="container_center" class="col-xs-6">
-    
-    <div>
-        <h3>Tags:
+        <div>
+            <h3>Tags:
+
             {% for tag in html_params.tags %}
-                <label class="checkbox-inline"> 
-                    <input type="checkbox" id="tag_{{loop.index0}}" value="option_{{ loop.index0 }}" tag={{tag[0]}}>{{ tag[0]}}({{ tag[1] }})
+                <label class="checkbox-inline" type="checkbox"> 
+                    <input type="checkbox" name="selected_tags" id="tag_{{loop.index0}}" tag={{tag[0]}}>{{ tag[0]}}({{ tag[1] }})
                 </label>
             {% endfor %}
-        </h3>
-    </div>
+
+            <!-- 添加一键折叠按钮 -->
+            &nbsp;&nbsp;
+            <a type="button" class="btn btn-primary " onClick="toggle_all()" >
+                <i class="glyphicon glyphicon-resize-vertical"></i>
+            </a>
+            </h3>
+        </div>
+
 
     {% for article in html_params.articles %}
-        <!-- 遍历后端传来的所有文章 -->
+        <!-- 遍历显示后端传来的所有文章 -->
         {% if article.id != 181 and article.id != 205 %}
         <div id={{article.id}} tags={{article.tags}}>
             <!-- 标题 -->
             <h2>
-                <a href="#article_{{ article.id }}" data-toggle="collapse">{{ article.title }}</a>
+                <a href="#article_{{ article.id }}" data-toggle="collapse" id="article_{{ article.id }}_title">{{ article.title }}</a>
                 {% for tag in article.tags.split(',') %}
                 <font size="3"><span class="label label-default">{{ tag }}</span></font>
                 {% endfor %}
@@ -99,13 +106,13 @@
 
                         <!-- 最后修改时间 -->
                         <span>
-                            &nbsp;&nbsp;<span class="glyphicon glyphicon-time"></span>
+                            &nbsp;&nbsp;<span class="glyphicon glyphicon-pencil"></span>
                             Last Modify:{{ article.publishtime }}
                         </span>
 
                         <!-- 版本 -->
                         <span>
-                            &nbsp;&nbsp;<span class="glyphicon glyphicon-time"></span>
+                            &nbsp;&nbsp;<span class="glyphicon glyphicon-list-alt"></span>
                             v1.0
                         </span>
 
@@ -145,7 +152,7 @@
                     <!-- 另：如果这里的p标签改为div 则会导致编辑时卡死 暂时没找到原因 -->
                     <p id="article_{{ article.id }}_original_text" hidden>{{ article.text | safe }}</p>
                     <div id="article_{{ article.id }}_text"></div>
-                    <p><a href="{{ url_for('blog.show_article', id=article.id) }}" id="article_{{ article.id }}_title">查看全文</a></p>
+                    <p><a href="{{ url_for('blog.show_article', id=article.id) }}">查看全文</a></p>
                 </div>
             </div> 
             <hr>
@@ -178,8 +185,7 @@
             </li>
           </ul>
         </nav>
-
-    </div>
+    </div> <!-- end container_center -->
 
     <div id="container_right" class="col-xs-3">
         广告位招租
@@ -238,14 +244,10 @@
                                     </label></div>
                                 </div>
                                 <!-- tag -->
-                                <div class="radio text-center">
+                                <div class="text-center">
                                     <hr/>
-                                    {% for tag in html_params.tags %}
-                                    <div><label>
-                                        <input type="checkbox" name="tag" id="tag_{{loop.index0}}" value={{tag[0]}}>{{tag[0]}}
-                                    </label></div>
+                                    <textarea name="tag" style="resize:none;" rows=5></textarea>
                                     <br/>
-                                    {% endfor %}
                                 </div>
                             </div>
                             <!-- 编译的镜像 -->
@@ -262,7 +264,6 @@
     </div>
 
 
-
     <!-- 以下为srcipt和css-->
 
     <!-- markdown插件和table扩展插件 -->
@@ -272,24 +273,41 @@
     <script type="text/javascript">
         // tag筛选
         $(document).ready(function(){
-            $("[tag]").click(function(){
+            $("[name=selected_tags]").click(function(){
                 $("[tags]").hide();
                 noselected = true;
-                $("[tag]").each(function(){
-                    tag = $(this).attr("tag");
-                    checked = $(this).is(":checked");
-                    if(checked){
-                        $("[tags*='"+tag+"']").show();
+                count = 0;
+
+                $("[tags]").each(function(){
+                    show = true;
+                    id = $(this).attr("id");
+                    tags = $(this).attr("tags").split(",");
+                    $("[name='selected_tags']:checked").each(function(){
+                        selected_tag = $(this).attr("tag");
+                        if(tags.indexOf(selected_tag) < 0){
+                            show = false;
+                        }
                         noselected = false;
+                    })
+                    if(show){
+                        count += 1;
+                        $("#"+id).show();
                     }
-                })
+                });
+
+                console.log("total:"+count);// to set in toggle button
                 if(noselected){
                     $("[tags]").show();
                 }
-                //$("[tags*='"+tag+"']").toggle();
-                //$("[tags]").not($("[tags*='"+tag+"'])")).hide();
             });
         });
+    </script>
+
+    <script type="text/javascript">
+        function toggle_all(){
+            $("a[data-toggle=collapse]:visible").each(function(){$(this).click();});
+        }
+        
     </script>
 
     <script>
@@ -374,9 +392,12 @@
             $("input[name='text_type'][value="+text_type+"]").attr("checked", true);
             $("input[name='visiable'][value="+visiable+"]").attr("checked", true);
             var tags = $("div[id="+article_id+"]").attr("tags");
+            /*
             tags.split(",").forEach(function(tag){
                 $("input[name='tag'][value="+tag+"]").attr("checked", true);
             });
+            */
+            $("textarea[name='tag']").val(tags);
             compile_instant();
         }
 
